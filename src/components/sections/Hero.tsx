@@ -15,7 +15,7 @@ export const Hero = () => {
       <div className="container mx-auto px-4 relative">
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center space-x-2 bg-green-600/20 text-green-400 px-4 py-2 rounded-full text-sm font-medium mb-8">
+          <div className="inline-flex items-center space-x-2 bg-green-600/20 text-green-400 px-4 py-2 rounded-full text-sm font-medium mb-8 border border-green-600/30">
             <Leaf className="h-4 w-4" />
             <span>Premium Quality Plants & Crafts</span>
           </div>
@@ -52,7 +52,7 @@ export const Hero = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
             <Button 
               size="lg" 
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-semibold group"
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-semibold group shadow-lg"
               data-testid="shop-now-btn"
             >
               Shop Now
@@ -62,7 +62,7 @@ export const Hero = () => {
             <Button 
               variant="outline" 
               size="lg"
-              className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-green-400 px-8 py-4 text-lg font-semibold"
+              className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-green-400 px-8 py-4 text-lg font-semibold shadow-lg"
               data-testid="learn-more-btn"
             >
               Learn More
@@ -70,7 +70,7 @@ export const Hero = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 pt-16 border-t border-gray-800">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 pt-16 border-t border-gray-700">
             <div className="text-center">
               <div className="text-3xl font-bold text-green-400 mb-2" data-testid="stat-products">500+</div>
               <div className="text-gray-400">Premium Products</div>

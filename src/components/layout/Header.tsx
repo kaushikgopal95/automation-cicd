@@ -49,7 +49,7 @@ export const Header = ({ onAuthClick, onCartClick }: HeaderProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-gray-900/60 border-b border-gray-800">
+    <header className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-gray-900/60 border-b border-gray-700">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -82,7 +82,7 @@ export const Header = ({ onAuthClick, onCartClick }: HeaderProps) => {
               <input
                 type="text"
                 placeholder="Search products..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                 data-testid="search-input"
               />
             </div>
@@ -96,7 +96,7 @@ export const Header = ({ onAuthClick, onCartClick }: HeaderProps) => {
                   variant="ghost"
                   size="sm"
                   onClick={handleSignOut}
-                  className="text-gray-300 hover:text-green-400"
+                  className="text-gray-300 hover:text-green-400 hover:bg-gray-800"
                   data-testid="sign-out-btn"
                 >
                   <User className="h-4 w-4 mr-2" />
@@ -109,7 +109,7 @@ export const Header = ({ onAuthClick, onCartClick }: HeaderProps) => {
                   variant="ghost"
                   size="sm"
                   onClick={() => onAuthClick('signin')}
-                  className="text-gray-300 hover:text-green-400"
+                  className="text-gray-300 hover:text-green-400 hover:bg-gray-800"
                   data-testid="sign-in-btn"
                 >
                   Sign In
@@ -117,7 +117,7 @@ export const Header = ({ onAuthClick, onCartClick }: HeaderProps) => {
                 <Button
                   size="sm"
                   onClick={() => onAuthClick('signup')}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  className="bg-green-600 hover:bg-green-700 text-white shadow-md"
                   data-testid="sign-up-btn"
                 >
                   Sign Up
@@ -130,13 +130,13 @@ export const Header = ({ onAuthClick, onCartClick }: HeaderProps) => {
               variant="ghost"
               size="sm"
               onClick={onCartClick}
-              className="relative text-gray-300 hover:text-green-400"
+              className="relative text-gray-300 hover:text-green-400 hover:bg-gray-800"
               data-testid="cart-btn"
             >
               <ShoppingCart className="h-5 w-5" />
               {cartItemCount > 0 && (
                 <Badge 
-                  className="absolute -top-2 -right-2 bg-green-600 text-white min-w-[20px] h-5 flex items-center justify-center text-xs"
+                  className="absolute -top-2 -right-2 bg-green-600 text-white min-w-[20px] h-5 flex items-center justify-center text-xs shadow-md"
                   data-testid="cart-badge"
                 >
                   {cartItemCount}
@@ -149,7 +149,7 @@ export const Header = ({ onAuthClick, onCartClick }: HeaderProps) => {
               variant="ghost"
               size="sm"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden text-gray-300"
+              className="md:hidden text-gray-300 hover:bg-gray-800"
               data-testid="mobile-menu-btn"
             >
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -159,33 +159,33 @@ export const Header = ({ onAuthClick, onCartClick }: HeaderProps) => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden border-t border-gray-800 py-4" data-testid="mobile-menu">
+          <div className="md:hidden border-t border-gray-700 py-4 bg-gray-800/50" data-testid="mobile-menu">
             <nav className="flex flex-col space-y-4">
-              <a href="#" className="text-gray-300 hover:text-green-400 transition-colors">
+              <a href="#" className="text-gray-300 hover:text-green-400 transition-colors px-4 py-2 hover:bg-gray-800 rounded">
                 Plants
               </a>
-              <a href="#" className="text-gray-300 hover:text-green-400 transition-colors">
+              <a href="#" className="text-gray-300 hover:text-green-400 transition-colors px-4 py-2 hover:bg-gray-800 rounded">
                 Crafts
               </a>
-              <a href="#" className="text-gray-300 hover:text-green-400 transition-colors">
+              <a href="#" className="text-gray-300 hover:text-green-400 transition-colors px-4 py-2 hover:bg-gray-800 rounded">
                 Plant Care
               </a>
-              <a href="#" className="text-gray-300 hover:text-green-400 transition-colors">
+              <a href="#" className="text-gray-300 hover:text-green-400 transition-colors px-4 py-2 hover:bg-gray-800 rounded">
                 About
               </a>
               
               {!user && (
-                <div className="flex flex-col space-y-2 pt-4 border-t border-gray-800">
+                <div className="flex flex-col space-y-2 pt-4 border-t border-gray-700 px-4">
                   <Button
                     variant="ghost"
                     onClick={() => onAuthClick('signin')}
-                    className="justify-start text-gray-300 hover:text-green-400"
+                    className="justify-start text-gray-300 hover:text-green-400 hover:bg-gray-800"
                   >
                     Sign In
                   </Button>
                   <Button
                     onClick={() => onAuthClick('signup')}
-                    className="justify-start bg-green-600 hover:bg-green-700 text-white"
+                    className="justify-start bg-green-600 hover:bg-green-700 text-white shadow-md"
                   >
                     Sign Up
                   </Button>

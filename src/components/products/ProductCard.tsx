@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShoppingCart, Heart, Star, Info } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -29,6 +29,7 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -69,7 +70,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         description: `${product.name} has been added to your cart`,
       });
 
-      // Refresh cart data
       queryClient.invalidateQueries({ queryKey: ['cart'] });
     } catch (error) {
       toast({
@@ -84,19 +84,24 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   const getDifficultyColor = (level?: string) => {
     switch (level?.toLowerCase()) {
-      case 'beginner': return 'bg-green-600';
-      case 'intermediate': return 'bg-yellow-600';
-      case 'advanced': return 'bg-red-600';
-      default: return 'bg-gray-600';
+      case 'beginner': return 'bg-green-600 text-white';
+      case 'intermediate': return 'bg-yellow-600 text-white';
+      case 'advanced': return 'bg-red-600 text-white';
+      default: return 'bg-gray-600 text-white';
     }
   };
 
+  const getPlaceholderImage = () => {
+    return "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop&crop=center";
+  };
+
   return (
-    <Card className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-all duration-300 group overflow-hidden" data-testid={`product-card-${product.sku}`}>
+    <Card className="bg-gray-900 border-gray-700 hover:border-green-500 transition-all duration-300 group overflow-hidden" data-testid={`product-card-${product.sku}`}>
       <div className="relative overflow-hidden">
         <img
-          src={product.image_url || "/placeholder.svg"}
+          src={imageError ? getPlaceholderImage() : (product.image_url || getPlaceholderImage())}
           alt={product.name}
+          onError={() => setImageError(true)}
           className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
           data-testid="product-image"
         />
@@ -106,7 +111,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           <Button
             size="sm"
             variant="secondary"
-            className="bg-white/20 backdrop-blur-sm hover:bg-white/30"
+            className="bg-gray-800/80 backdrop-blur-sm hover:bg-gray-700/80 text-white border-gray-600"
             data-testid="quick-view-btn"
           >
             <Info className="h-4 w-4" />
@@ -114,7 +119,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           <Button
             size="sm"
             variant="secondary"
-            className="bg-white/20 backdrop-blur-sm hover:bg-white/30"
+            className="bg-gray-800/80 backdrop-blur-sm hover:bg-gray-700/80 text-white border-gray-600"
             data-testid="wishlist-btn"
           >
             <Heart className="h-4 w-4" />
@@ -142,13 +147,13 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               {product.name}
             </h3>
             {product.categories && (
-              <Badge variant="outline" className="text-xs text-gray-400 border-gray-700 mt-1">
+              <Badge variant="outline" className="text-xs text-gray-400 border-gray-600 mt-1">
                 {product.categories.name}
               </Badge>
             )}
           </div>
           {product.difficulty_level && (
-            <Badge className={`text-xs text-white ${getDifficultyColor(product.difficulty_level)}`} data-testid="difficulty-badge">
+            <Badge className={`text-xs ${getDifficultyColor(product.difficulty_level)}`} data-testid="difficulty-badge">
               {product.difficulty_level}
             </Badge>
           )}
@@ -177,7 +182,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           <Button
             onClick={handleAddToCart}
             disabled={isLoading || product.stock_quantity === 0}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-green-600 hover:bg-green-700 text-white shadow-md"
             data-testid="add-to-cart-btn"
           >
             {isLoading ? (
