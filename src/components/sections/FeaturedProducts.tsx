@@ -21,7 +21,7 @@ export const FeaturedProducts = () => {
   });
 
   return (
-    <section className="py-20 bg-gray-950" data-testid="featured-products">
+    <section id="featured-products" className="py-20 bg-gray-950" data-testid="featured-products">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-100 mb-4" data-testid="featured-title">

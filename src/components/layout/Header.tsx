@@ -9,9 +9,10 @@ import { useQuery } from "@tanstack/react-query";
 interface HeaderProps {
   onAuthClick: (mode: 'signin' | 'signup') => void;
   onCartClick: () => void;
+  onSearch: (query: string) => void;
 }
 
-export const Header = ({ onAuthClick, onCartClick }: HeaderProps) => {
+export const Header = ({ onAuthClick, onCartClick, onSearch }: HeaderProps) => {
   const [user, setUser] = useState<any>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,8 +50,8 @@ export const Header = ({ onAuthClick, onCartClick }: HeaderProps) => {
     await supabase.auth.signOut();
   };
 
-  const handleNavigation = (section: string) => {
-    const element = document.getElementById(section);
+  const handleNavigation = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
@@ -60,8 +61,7 @@ export const Header = ({ onAuthClick, onCartClick }: HeaderProps) => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      console.log('Searching for:', searchQuery);
-      // Future: Implement search functionality
+      onSearch(searchQuery);
     }
   };
 

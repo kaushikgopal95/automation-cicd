@@ -13,10 +13,21 @@ const Index = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [showCart, setShowCart] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleAuthClick = (mode: 'signin' | 'signup') => {
     setAuthMode(mode);
     setShowAuthModal(true);
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    console.log('Searching for:', query);
+    // For now, just scroll to products section when searching
+    const featuredSection = document.getElementById('featured-products');
+    if (featuredSection) {
+      featuredSection.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -24,6 +35,7 @@ const Index = () => {
       <Header 
         onAuthClick={handleAuthClick}
         onCartClick={() => setShowCart(true)}
+        onSearch={handleSearch}
       />
       
       <main>

@@ -19,7 +19,7 @@ export const Categories = () => {
   });
 
   return (
-    <section className="py-20 bg-gray-900" data-testid="categories-section">
+    <section id="categories" className="py-20 bg-gray-900" data-testid="categories-section">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-100 mb-4" data-testid="categories-title">
