@@ -91,15 +91,41 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     }
   };
 
-  const getPlaceholderImage = () => {
-    return "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop&crop=center";
+  const getProductImage = () => {
+    if (imageError || !product.image_url) {
+      // Different images based on product category and name
+      if (product.categories?.slug === 'indoor-plants') {
+        if (product.name.toLowerCase().includes('monstera')) {
+          return "https://images.unsplash.com/photo-1509315073520-7fadf8b73739?w=400&h=300&fit=crop&crop=center";
+        } else if (product.name.toLowerCase().includes('snake')) {
+          return "https://images.unsplash.com/photo-1595239244574-806db09dcd26?w=400&h=300&fit=crop&crop=center";
+        } else if (product.name.toLowerCase().includes('fiddle')) {
+          return "https://images.unsplash.com/photo-1558603668-6570496b66f8?w=400&h=300&fit=crop&crop=center";
+        } else {
+          return "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop&crop=center";
+        }
+      } else if (product.categories?.slug === 'handmade-crafts') {
+        if (product.name.toLowerCase().includes('macrame')) {
+          return "https://images.unsplash.com/photo-1493514789931-586cb221d7a7?w=400&h=300&fit=crop&crop=center";
+        } else if (product.name.toLowerCase().includes('ceramic')) {
+          return "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&crop=center";
+        } else {
+          return "https://images.unsplash.com/photo-1515150144906-dae0426e5c9e?w=400&h=300&fit=crop&crop=center";
+        }
+      } else if (product.categories?.slug === 'plant-care') {
+        return "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop&crop=center";
+      } else {
+        return "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=400&h=300&fit=crop&crop=center";
+      }
+    }
+    return product.image_url;
   };
 
   return (
     <Card className="bg-gray-900 border-gray-700 hover:border-green-500 transition-all duration-300 group overflow-hidden" data-testid={`product-card-${product.sku}`}>
       <div className="relative overflow-hidden">
         <img
-          src={imageError ? getPlaceholderImage() : (product.image_url || getPlaceholderImage())}
+          src={getProductImage()}
           alt={product.name}
           onError={() => setImageError(true)}
           className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"

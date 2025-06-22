@@ -3,8 +3,22 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Leaf, Heart, Star } from "lucide-react";
 
 export const Hero = () => {
+  const handleShopNow = () => {
+    const featuredSection = document.getElementById('featured-products');
+    if (featuredSection) {
+      featuredSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleLearnMore = () => {
+    const categoriesSection = document.getElementById('categories');
+    if (categoriesSection) {
+      categoriesSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
-    <section className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-green-900 py-20 overflow-hidden">
+    <section id="hero" className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-green-900 py-20 overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-20 left-10 w-32 h-32 border border-green-400 rounded-full"></div>
@@ -52,6 +66,7 @@ export const Hero = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
             <Button 
               size="lg" 
+              onClick={handleShopNow}
               className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-semibold group shadow-lg"
               data-testid="shop-now-btn"
             >
@@ -62,6 +77,7 @@ export const Hero = () => {
             <Button 
               variant="outline" 
               size="lg"
+              onClick={handleLearnMore}
               className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-green-400 px-8 py-4 text-lg font-semibold shadow-lg"
               data-testid="learn-more-btn"
             >

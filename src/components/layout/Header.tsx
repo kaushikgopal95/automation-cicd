@@ -14,6 +14,7 @@ interface HeaderProps {
 export const Header = ({ onAuthClick, onCartClick }: HeaderProps) => {
   const [user, setUser] = useState<any>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -48,44 +49,78 @@ export const Header = ({ onAuthClick, onCartClick }: HeaderProps) => {
     await supabase.auth.signOut();
   };
 
+  const handleNavigation = (section: string) => {
+    const element = document.getElementById(section);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+    setIsMenuOpen(false);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      console.log('Searching for:', searchQuery);
+      // Future: Implement search functionality
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-gray-900/60 border-b border-gray-700">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-green-400" data-testid="logo">
+            <h1 className="text-2xl font-bold text-green-400 cursor-pointer" data-testid="logo" onClick={() => handleNavigation('hero')}>
               PlantCraft
             </h1>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-gray-300 hover:text-green-400 transition-colors" data-testid="nav-plants">
+            <button 
+              onClick={() => handleNavigation('featured-products')} 
+              className="text-gray-300 hover:text-green-400 transition-colors" 
+              data-testid="nav-plants"
+            >
               Plants
-            </a>
-            <a href="#" className="text-gray-300 hover:text-green-400 transition-colors" data-testid="nav-crafts">
+            </button>
+            <button 
+              onClick={() => handleNavigation('categories')} 
+              className="text-gray-300 hover:text-green-400 transition-colors" 
+              data-testid="nav-crafts"
+            >
               Crafts
-            </a>
-            <a href="#" className="text-gray-300 hover:text-green-400 transition-colors" data-testid="nav-care">
+            </button>
+            <button 
+              onClick={() => handleNavigation('newsletter')} 
+              className="text-gray-300 hover:text-green-400 transition-colors" 
+              data-testid="nav-care"
+            >
               Plant Care
-            </a>
-            <a href="#" className="text-gray-300 hover:text-green-400 transition-colors" data-testid="nav-about">
+            </button>
+            <button 
+              onClick={() => handleNavigation('footer')} 
+              className="text-gray-300 hover:text-green-400 transition-colors" 
+              data-testid="nav-about"
+            >
               About
-            </a>
+            </button>
           </nav>
 
           {/* Search Bar */}
           <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
-            <div className="relative w-full">
+            <form onSubmit={handleSearch} className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <input
                 type="text"
                 placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                 data-testid="search-input"
               />
-            </div>
+            </form>
           </div>
 
           {/* Actions */}
@@ -161,18 +196,30 @@ export const Header = ({ onAuthClick, onCartClick }: HeaderProps) => {
         {isMenuOpen && (
           <div className="md:hidden border-t border-gray-700 py-4 bg-gray-800/50" data-testid="mobile-menu">
             <nav className="flex flex-col space-y-4">
-              <a href="#" className="text-gray-300 hover:text-green-400 transition-colors px-4 py-2 hover:bg-gray-800 rounded">
+              <button 
+                onClick={() => handleNavigation('featured-products')} 
+                className="text-gray-300 hover:text-green-400 transition-colors px-4 py-2 hover:bg-gray-800 rounded text-left"
+              >
                 Plants
-              </a>
-              <a href="#" className="text-gray-300 hover:text-green-400 transition-colors px-4 py-2 hover:bg-gray-800 rounded">
+              </button>
+              <button 
+                onClick={() => handleNavigation('categories')} 
+                className="text-gray-300 hover:text-green-400 transition-colors px-4 py-2 hover:bg-gray-800 rounded text-left"
+              >
                 Crafts
-              </a>
-              <a href="#" className="text-gray-300 hover:text-green-400 transition-colors px-4 py-2 hover:bg-gray-800 rounded">
+              </button>
+              <button 
+                onClick={() => handleNavigation('newsletter')} 
+                className="text-gray-300 hover:text-green-400 transition-colors px-4 py-2 hover:bg-gray-800 rounded text-left"
+              >
                 Plant Care
-              </a>
-              <a href="#" className="text-gray-300 hover:text-green-400 transition-colors px-4 py-2 hover:bg-gray-800 rounded">
+              </button>
+              <button 
+                onClick={() => handleNavigation('footer')} 
+                className="text-gray-300 hover:text-green-400 transition-colors px-4 py-2 hover:bg-gray-800 rounded text-left"
+              >
                 About
-              </a>
+              </button>
               
               {!user && (
                 <div className="flex flex-col space-y-2 pt-4 border-t border-gray-700 px-4">

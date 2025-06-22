@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { BrowserRouter as Router } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Hero } from "@/components/sections/Hero";
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
