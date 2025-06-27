@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: staging
+    container_name: app-staging
+    ports:
+      - "5173:5173"
+    command: npm run preview  # Serve the app
+
+  playwright:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: staging
+    depends_on:
+      - app
+    entrypoint: [ "npx", "playwright", "test", "--base-url=http://app:5173" ]
