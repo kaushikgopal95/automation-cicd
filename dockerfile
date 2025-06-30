@@ -1,7 +1,7 @@
 # ----------------------------------- Base Stage ----------------------------------
 
-# Base image with node 18 version downloaded from docker and will act as base image for all env
-FROM node:18-alpine  as base
+# Base image with node 18 version will act as base image for all env
+FROM node:18 as base
 
 # Sets the default directory inside the container where commands will run.
 WORKDIR /app

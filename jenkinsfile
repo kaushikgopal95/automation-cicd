@@ -1,28 +1,15 @@
 pipeline {
   agent any
   stages {
-    stage('Build Staging Image') {
+    stage('Run Playwright Tests on Netlify') {
       steps {
-        sh 'docker-compose -f docker-compose.qa.yml build'
-      }
-    }
-    stage('Run Playwright Tests') {
-      steps {
-        sh 'docker-compose -f docker-compose.qa.yml up --abort-on-container-exit --exit-code-from playwright'
+        sh 'npx playwright test'
       }
       post {
         always {
           archiveArtifacts artifacts: 'playwright-report/**/*'
           junit 'playwright-report/*.xml' // If using JUnit reporter
         }
-      }
-    }
-    stage('Deploy to Prod') {
-      when {
-        expression { currentBuild.result == 'SUCCESS' }
-      }
-      steps {
-        sh 'docker-compose -f docker-compose.prod.yml up -d --build'
       }
     }
   }
