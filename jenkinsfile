@@ -8,7 +8,7 @@ pipeline {
       post {
         always {
           archiveArtifacts artifacts: 'playwright-report/**/*'
-          junit 'playwright-report/*.xml' // If using JUnit reporter
+          // junit 'playwright-report/*.xml' // If using JUnit reporter
         }
       }
     }
