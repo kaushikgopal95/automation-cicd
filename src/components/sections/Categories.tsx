@@ -1,10 +1,16 @@
 
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 
 export const Categories = () => {
+  const navigate = useNavigate();
+  
+  const handleCategoryClick = (categoryId: string) => {
+    navigate(`/categories/${categoryId}`);
+  };
   const { data: categories, isLoading, error } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
@@ -70,6 +76,7 @@ export const Categories = () => {
               key={category.id} 
               className="bg-gray-800 border-gray-700 hover:border-green-500 transition-all duration-300 group cursor-pointer"
               data-testid={`category-card-${category.slug}`}
+              onClick={() => handleCategoryClick(category.id)}
             >
               <CardContent className="p-6 text-center">
                 <div className="w-16 h-16 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-600/30 transition-colors">

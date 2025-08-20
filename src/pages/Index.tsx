@@ -8,57 +8,60 @@ import { PlantCare } from "@/components/sections/PlantCare";
 import { AboutUs } from "@/components/sections/AboutUs";
 import { Newsletter } from "@/components/sections/Newsletter";
 import { Footer } from "@/components/layout/Footer";
-import { AuthModal } from "@/components/auth/AuthModal";
+import { AuthDrawer } from "@/components/auth/AuthDrawer";
 import { CartSidebar } from "@/components/cart/CartSidebar";
 
 const Index = () => {
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showAuthDrawer, setShowAuthDrawer] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [showCart, setShowCart] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const handleAuthClick = (mode: 'signin' | 'signup') => {
+  const handleAuthClick = (mode: 'signin' | 'signup' = 'signin') => {
     setAuthMode(mode);
-    setShowAuthModal(true);
+    setShowAuthDrawer(true);
   };
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    if (query.trim()) {
-      console.log('Searching for:', query);
-      // Scroll to products section when searching
-      const featuredSection = document.getElementById('featured-products');
-      if (featuredSection) {
-        featuredSection.scrollIntoView({ behavior: 'smooth' });
-      }
-      // TODO: Implement actual search functionality
-    }
+  const handleAuthSuccess = () => {
+    setShowAuthDrawer(false);
   };
+
+
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
+    <div className="min-h-screen bg-gray-950 text-gray-100 overflow-x-hidden">
       <Header 
-        onAuthClick={handleAuthClick}
+        onAuthClick={() => handleAuthClick('signin')}
         onCartClick={() => setShowCart(true)}
-        onSearch={handleSearch}
       />
       
       <main>
-        <Hero />
-        <FeaturedProducts />
-        <Categories />
-        <PlantCare />
-        <AboutUs />
-        <Newsletter />
+        <section id="hero">
+          <Hero onGetStarted={() => handleAuthClick('signup')} />
+        </section>
+        <section id="featured-products">
+          <FeaturedProducts />
+        </section>
+        {/* Commented out as per request
+        <section id="categories">
+          <Categories />
+        </section>
+        <section id="plant-care">
+          <PlantCare />
+        </section>
+        <section id="about">
+          <AboutUs />
+        </section>
+        */}
+        <section id="newsletter">
+          <Newsletter />
+        </section>
       </main>
       
       <Footer />
       
-      <AuthModal 
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        mode={authMode}
-        onSwitchMode={setAuthMode}
+      <AuthDrawer 
+        isOpen={showAuthDrawer}
+        onClose={() => setShowAuthDrawer(false)}
+        initialMode={authMode}
       />
       
       <CartSidebar 

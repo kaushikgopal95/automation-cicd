@@ -2,7 +2,11 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Leaf, Heart, Star } from "lucide-react";
 
-export const Hero = () => {
+interface HeroProps {
+  onGetStarted?: () => void;
+}
+
+export const Hero = ({ onGetStarted }: HeroProps) => {
   const handleShopNow = () => {
     const featuredSection = document.getElementById('featured-products');
     if (featuredSection) {
@@ -63,14 +67,14 @@ export const Hero = () => {
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <Button 
               size="lg" 
-              onClick={handleShopNow}
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-semibold group shadow-lg"
-              data-testid="shop-now-btn"
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg font-semibold group"
+              onClick={onGetStarted || handleShopNow}
+              data-testid="get-started-btn"
             >
-              Shop Now
+              {onGetStarted ? 'Get Started' : 'Shop Now'}
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
             
