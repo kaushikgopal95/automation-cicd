@@ -51,9 +51,24 @@ export const Header = ({ onAuthClick, onCartClick, onSearch }: HeaderProps) => {
   };
 
   const handleNavigation = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+    // Handle special cases for navigation
+    if (sectionId === 'about') {
+      // For now, scroll to footer until we have a dedicated about page
+      const element = document.getElementById('footer');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else if (sectionId === 'care') {
+      // Scroll to newsletter section for plant care info
+      const element = document.getElementById('newsletter');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
     }
     setIsMenuOpen(false);
   };
@@ -93,14 +108,14 @@ export const Header = ({ onAuthClick, onCartClick, onSearch }: HeaderProps) => {
               Crafts
             </button>
             <button 
-              onClick={() => handleNavigation('newsletter')} 
+              onClick={() => handleNavigation('care')} 
               className="text-gray-300 hover:text-green-400 transition-colors" 
               data-testid="nav-care"
             >
               Plant Care
             </button>
             <button 
-              onClick={() => handleNavigation('footer')} 
+              onClick={() => handleNavigation('about')} 
               className="text-gray-300 hover:text-green-400 transition-colors" 
               data-testid="nav-about"
             >
@@ -209,13 +224,13 @@ export const Header = ({ onAuthClick, onCartClick, onSearch }: HeaderProps) => {
                 Crafts
               </button>
               <button 
-                onClick={() => handleNavigation('newsletter')} 
+                onClick={() => handleNavigation('care')} 
                 className="text-gray-300 hover:text-green-400 transition-colors px-4 py-2 hover:bg-gray-800 rounded text-left"
               >
                 Plant Care
               </button>
               <button 
-                onClick={() => handleNavigation('footer')} 
+                onClick={() => handleNavigation('about')} 
                 className="text-gray-300 hover:text-green-400 transition-colors px-4 py-2 hover:bg-gray-800 rounded text-left"
               >
                 About

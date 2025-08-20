@@ -83,8 +83,13 @@ export const CartItem = ({ item }: CartItemProps) => {
       <img
         src={item.products.image_url || "/placeholder.svg"}
         alt={item.products.name}
+        onError={(e) => {
+          // Fallback to a default plant image if the product image fails
+          e.currentTarget.src = "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=64&h=64&fit=crop&crop=center&auto=format&q=75";
+        }}
         className="w-16 h-16 object-cover rounded"
         data-testid="cart-item-image"
+        loading="lazy"
       />
       
       <div className="flex-1 space-y-2">
