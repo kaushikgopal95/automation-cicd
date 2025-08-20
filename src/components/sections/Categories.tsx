@@ -5,18 +5,52 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 
 export const Categories = () => {
-  const { data: categories } = useQuery({
+  const { data: categories, isLoading, error } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
+      console.log('Fetching categories...');
       const { data, error } = await supabase
         .from('categories')
         .select('*')
         .order('name');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching categories:', error);
+        throw error;
+      }
+      
+      console.log('Fetched categories:', data);
       return data || [];
     },
   });
+
+  if (error) {
+    console.error('Error in Categories:', error);
+    return (
+      <section id="categories" className="py-20 bg-gray-900">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h2 className="text-2xl text-red-500">Error loading categories</h2>
+            <p className="text-gray-400">Please try again later</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <section id="categories" className="py-20 bg-gray-900">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-40 bg-gray-800 rounded-lg animate-pulse"></div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="categories" className="py-20 bg-gray-900" data-testid="categories-section">

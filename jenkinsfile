@@ -1,15 +1,33 @@
 pipeline {
   agent any
   stages {
-    stage('Run Playwright Tests on Netlify') {
+    stage('Build Staging Image (Optional)') { // Build the QA (staging) image locally for fast feedback
       steps {
-        sh 'npx playwright test'
+        sh 'docker-compose -f docker-compose.qa.yml build'
+      }
+    }
+    stage('Deploy to AWS Staging') { // Deploy the app to AWS staging server
+      steps {
+        sh 'ssh ec2-user@your-aws-staging-server "cd /path/to/app && git pull && docker-compose -f docker-compose.qa.yml up -d --build"'
+      }
+    }
+    stage('Run Cypress Tests on AWS Staging') { // Run Cypress tests against the live AWS staging URL
+      steps {
+        // Replace the URL with your actual AWS staging URL in the test file
+        sh 'npx cypress run'
       }
       post {
         always {
-          archiveArtifacts artifacts: 'playwright-report/**/*'
-          // junit 'playwright-report/*.xml' // If using JUnit reporter
+          archiveArtifacts artifacts: 'cypress/videos/**/*,cypress/screenshots/**/*'
         }
+      }
+    }
+    stage('Deploy to AWS Production') { // Deploy the app to AWS production server if tests pass
+      when {
+        expression { currentBuild.result == 'SUCCESS' }
+      }
+      steps {
+        sh 'ssh ec2-user@your-aws-production-server "cd /path/to/app && git pull && docker-compose -f docker-compose.prod.yml up -d --build"'
       }
     }
   }

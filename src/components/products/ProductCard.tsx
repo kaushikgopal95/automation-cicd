@@ -92,33 +92,61 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   };
 
   const getProductImage = () => {
-    if (imageError || !product.image_url) {
-      // Different images based on product category and name
-      if (product.categories?.slug === 'indoor-plants') {
-        if (product.name.toLowerCase().includes('monstera')) {
-          return "https://images.unsplash.com/photo-1509315073520-7fadf8b73739?w=400&h=300&fit=crop&crop=center";
-        } else if (product.name.toLowerCase().includes('snake')) {
-          return "https://images.unsplash.com/photo-1595239244574-806db09dcd26?w=400&h=300&fit=crop&crop=center";
-        } else if (product.name.toLowerCase().includes('fiddle')) {
-          return "https://images.unsplash.com/photo-1558603668-6570496b66f8?w=400&h=300&fit=crop&crop=center";
-        } else {
-          return "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop&crop=center";
-        }
-      } else if (product.categories?.slug === 'handmade-crafts') {
-        if (product.name.toLowerCase().includes('macrame')) {
-          return "https://images.unsplash.com/photo-1493514789931-586cb221d7a7?w=400&h=300&fit=crop&crop=center";
-        } else if (product.name.toLowerCase().includes('ceramic')) {
-          return "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&crop=center";
-        } else {
-          return "https://images.unsplash.com/photo-1515150144906-dae0426e5c9e?w=400&h=300&fit=crop&crop=center";
-        }
-      } else if (product.categories?.slug === 'plant-care') {
-        return "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop&crop=center";
-      } else {
-        return "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=400&h=300&fit=crop&crop=center";
-      }
+    // If there's an image URL and no error, use it
+    if (product.image_url && !imageError) {
+      return product.image_url;
     }
-    return product.image_url;
+
+    // Fallback to category-specific images
+    const plantImages = {
+      monstera: 'https://images.unsplash.com/photo-1509315073520-7fadf8b73739?w=800&h=600&fit=crop&crop=center',
+      snake: 'https://images.unsplash.com/photo-1595239244574-806db09dcd26?w=800&h=600&fit=crop&crop=center',
+      fiddle: 'https://images.unsplash.com/photo-1558603668-6570496b66f8?w=800&h=600&fit=crop&crop=center',
+      pothos: 'https://images.unsplash.com/photo-1600411832666-9c9a0acb50cc?w=800&h=600&fit=crop&crop=center',
+      succulent: 'https://images.unsplash.com/photo-1518977676601-b53fccabaac7?w=800&h=600&fit=crop&crop=center',
+      default: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&h=600&fit=crop&crop=center'
+    };
+
+    const craftImages = {
+      macrame: 'https://images.unsplash.com/photo-1493514789931-586cb221d7a7?w=800&h=600&fit=crop&crop=center',
+      ceramic: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop&crop=center',
+      planter: 'https://images.unsplash.com/photo-1515150144906-dae0426e5c9e?w=800&h=600&fit=crop&crop=center',
+      default: 'https://images.unsplash.com/photo-1605000797499-95a51c5269ae?w=800&h=600&fit=crop&crop=center'
+    };
+
+    const plantCareImages = {
+      fertilizer: 'https://images.unsplash.com/photo-1597846255279-4b7a6d7c2c8c?w=800&h=600&fit=crop&crop=center',
+      tools: 'https://images.unsplash.com/photo-1584308666744-5d72bbefd1f5?w=800&h=600&fit=crop&crop=center',
+      default: 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=800&h=600&fit=crop&crop=center'
+    };
+
+    // Check for specific product names in the product name
+    const productName = product.name.toLowerCase();
+    
+    if (product.categories?.slug === 'indoor-plants') {
+      if (productName.includes('monstera')) return plantImages.monstera;
+      if (productName.includes('snake')) return plantImages.snake;
+      if (productName.includes('fiddle')) return plantImages.fiddle;
+      if (productName.includes('pothos')) return plantImages.pothos;
+      if (productName.includes('succulent')) return plantImages.succulent;
+      return plantImages.default;
+    }
+    
+    if (product.categories?.slug === 'handmade-crafts') {
+      if (productName.includes('macrame')) return craftImages.macrame;
+      if (productName.includes('ceramic')) return craftImages.ceramic;
+      if (productName.includes('planter')) return craftImages.planter;
+      return craftImages.default;
+    }
+    
+    if (product.categories?.slug === 'plant-care') {
+      if (productName.includes('fertilizer')) return plantCareImages.fertilizer;
+      if (productName.includes('tool') || productName.includes('set')) return plantCareImages.tools;
+      return plantCareImages.default;
+    }
+
+    // Default fallback
+    return 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=800&h=600&fit=crop&crop=center';
   };
 
   return (

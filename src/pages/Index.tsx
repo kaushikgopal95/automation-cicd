@@ -4,6 +4,8 @@ import { Header } from "@/components/layout/Header";
 import { Hero } from "@/components/sections/Hero";
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
 import { Categories } from "@/components/sections/Categories";
+import { PlantCare } from "@/components/sections/PlantCare";
+import { AboutUs } from "@/components/sections/AboutUs";
 import { Newsletter } from "@/components/sections/Newsletter";
 import { Footer } from "@/components/layout/Footer";
 import { AuthModal } from "@/components/auth/AuthModal";
@@ -42,6 +44,8 @@ const Index = () => {
         <Hero />
         <FeaturedProducts />
         <Categories />
+        <PlantCare />
+        <AboutUs />
         <Newsletter />
       </main>
       

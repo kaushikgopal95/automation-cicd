@@ -5,9 +5,10 @@ import { ProductCard } from "@/components/products/ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const FeaturedProducts = () => {
-  const { data: products, isLoading } = useQuery({
+  const { data: products, isLoading, error } = useQuery({
     queryKey: ['featured-products'],
     queryFn: async () => {
+      console.log('Fetching featured products...');
       const { data, error } = await supabase
         .from('products')
         .select('*, categories(*)')
@@ -15,10 +16,29 @@ export const FeaturedProducts = () => {
         .eq('is_active', true)
         .limit(6);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching products:', error);
+        throw error;
+      }
+      
+      console.log('Fetched products:', data);
       return data || [];
     },
   });
+
+  if (error) {
+    console.error('Error in FeaturedProducts:', error);
+    return (
+      <section id="featured-products" className="py-20 bg-gray-950">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h2 className="text-2xl text-red-500">Error loading products</h2>
+            <p className="text-gray-400">Please try again later</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="featured-products" className="py-20 bg-gray-950" data-testid="featured-products">
