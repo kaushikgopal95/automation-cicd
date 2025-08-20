@@ -39,7 +39,13 @@ export const Categories = () => {
             >
               <CardContent className="p-6 text-center">
                 <div className="w-16 h-16 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-600/30 transition-colors">
-                  <span className="text-2xl">🌱</span>
+                  <span className="text-2xl">
+                    {category.slug === 'indoor-plants' && '🌱'}
+                    {category.slug === 'handmade-crafts' && '🎨'}
+                    {category.slug === 'plant-care' && '🌿'}
+                    {category.slug === 'home-decor' && '🏠'}
+                    {!['indoor-plants', 'handmade-crafts', 'plant-care', 'home-decor'].includes(category.slug) && '🌱'}
+                  </span>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-100 mb-2 group-hover:text-green-400 transition-colors">
                   {category.name}

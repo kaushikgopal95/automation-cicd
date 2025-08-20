@@ -22,11 +22,14 @@ const Index = () => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    console.log('Searching for:', query);
-    // For now, just scroll to products section when searching
-    const featuredSection = document.getElementById('featured-products');
-    if (featuredSection) {
-      featuredSection.scrollIntoView({ behavior: 'smooth' });
+    if (query.trim()) {
+      console.log('Searching for:', query);
+      // Scroll to products section when searching
+      const featuredSection = document.getElementById('featured-products');
+      if (featuredSection) {
+        featuredSection.scrollIntoView({ behavior: 'smooth' });
+      }
+      // TODO: Implement actual search functionality
     }
   };
 

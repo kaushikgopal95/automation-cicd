@@ -33,7 +33,7 @@ export const Newsletter = () => {
         <div className="max-w-2xl mx-auto text-center">
           <div className="inline-flex items-center space-x-2 bg-green-600/20 text-green-400 px-4 py-2 rounded-full text-sm font-medium mb-8 border border-green-600/30">
             <Leaf className="h-4 w-4" />
-            <span>Stay Updated</span>
+            <span>Plant Care & Updates</span>
           </div>
           
           <h2 className="text-4xl font-bold text-gray-100 mb-4" data-testid="newsletter-title">
@@ -41,6 +41,8 @@ export const Newsletter = () => {
           </h2>
           <p className="text-xl text-gray-400 mb-8">
             Join our community of plant lovers and receive expert care guides, new product updates, and special discounts.
+            <br />
+            <span className="text-lg text-green-400 font-medium">Learn how to keep your plants thriving!</span>
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">

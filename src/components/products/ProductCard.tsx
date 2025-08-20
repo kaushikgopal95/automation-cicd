@@ -96,26 +96,26 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       // Different images based on product category and name
       if (product.categories?.slug === 'indoor-plants') {
         if (product.name.toLowerCase().includes('monstera')) {
-          return "https://images.unsplash.com/photo-1509315073520-7fadf8b73739?w=400&h=300&fit=crop&crop=center";
+          return "https://images.unsplash.com/photo-1509315073520-7fadf8b73739?w=400&h=300&fit=crop&crop=center&auto=format&q=75";
         } else if (product.name.toLowerCase().includes('snake')) {
-          return "https://images.unsplash.com/photo-1595239244574-806db09dcd26?w=400&h=300&fit=crop&crop=center";
+          return "https://images.unsplash.com/photo-1595239244574-806db09dcd26?w=400&h=300&fit=crop&crop=center&auto=format&q=75";
         } else if (product.name.toLowerCase().includes('fiddle')) {
-          return "https://images.unsplash.com/photo-1558603668-6570496b66f8?w=400&h=300&fit=crop&crop=center";
+          return "https://images.unsplash.com/photo-1558603668-6570496b66f8?w=400&h=300&fit=crop&crop=center&auto=format&q=75";
         } else {
-          return "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop&crop=center";
+          return "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop&crop=center&auto=format&q=75";
         }
       } else if (product.categories?.slug === 'handmade-crafts') {
         if (product.name.toLowerCase().includes('macrame')) {
-          return "https://images.unsplash.com/photo-1493514789931-586cb221d7a7?w=400&h=300&fit=crop&crop=center";
+          return "https://images.unsplash.com/photo-1493514789931-586cb221d7a7?w=400&h=300&fit=crop&crop=center&auto=format&q=75";
         } else if (product.name.toLowerCase().includes('ceramic')) {
-          return "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&crop=center";
+          return "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&crop=center&auto=format&q=75";
         } else {
-          return "https://images.unsplash.com/photo-1515150144906-dae0426e5c9e?w=400&h=300&fit=crop&crop=center";
+          return "https://images.unsplash.com/photo-1515150144906-dae0426e5c9e?w=400&h=300&fit=crop&crop=center&auto=format&q=75";
         }
       } else if (product.categories?.slug === 'plant-care') {
-        return "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop&crop=center";
+        return "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop&crop=center&auto=format&q=75";
       } else {
-        return "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=400&h=300&fit=crop&crop=center";
+        return "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=400&h=300&fit=crop&crop=center&auto=format&q=75";
       }
     }
     return product.image_url;
@@ -127,9 +127,16 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         <img
           src={getProductImage()}
           alt={product.name}
-          onError={() => setImageError(true)}
+          onError={(e) => {
+            if (!imageError) {
+              setImageError(true);
+              // Force re-render to use fallback image
+              e.currentTarget.src = getProductImage();
+            }
+          }}
           className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
           data-testid="product-image"
+          loading="lazy"
         />
         
         {/* Overlay Actions */}
