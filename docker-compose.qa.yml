@@ -1,14 +1,12 @@
-version: "3.8"  # Docker Compose file format version
+version: "3.8"
 
 services:
-  playwright:
-    build:
-      context: .  # Use the current directory as the build context
-      dockerfile: Dockerfile  # Use the main Dockerfile
-      target: staging  # Use the staging build stage for dependencies
-    # Run Playwright tests against the live staging URL (update the URL as needed)
-    entrypoint: [ "npx", "playwright", "test", "--base-url=https://your-staging-domain.com" ]  # <-- Replace with your actual staging URL
-    # environment:
-    #   - NODE_ENV=staging  # (Optional) Set environment variables for tests if needed
-
-# Note: The 'app' service is removed because tests are run against the live deployed app, not a local container.
+  cypress:
+    image: cypress/included:latest
+    working_dir: /e2e
+    environment:
+      - CYPRESS_BASE_URL=https://your-staging-domain.com  # Update with your actual staging URL
+    volumes:
+      - ./cypress:/e2e/cypress
+      - ./cypress.config.ts:/e2e/cypress.config.ts
+    command: run --browser chrome  # Run tests in headless mode by default

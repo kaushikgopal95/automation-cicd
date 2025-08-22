@@ -36,13 +36,6 @@ FROM base as staging
 #Install all packages dependencies mentioned in package*.json file with a clean install
 RUN npm ci
 
-#installing playwright
-RUN npm install -g @playwright/test 
-
-#installing playwright browser dependencies
-RUN npx playwright install --with-deps
-
-
 #Copy source code
 COPY . .  
 

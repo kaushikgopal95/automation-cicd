@@ -6,7 +6,7 @@
   ],
   "compilerOptions": {
     "baseUrl": ".",
-    "types": ["cypress"],
+    "types": ["cypress", "node"],
     "paths": {
       "@/*": ["./src/*"]
     },
