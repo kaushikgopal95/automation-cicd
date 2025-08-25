@@ -1,9 +1,15 @@
 pipeline {
   agent any
   environment {
-    DOCKER_IMAGE = 'kaushikgopal95/plantbot'
-    RENDER_STAGING_URL = 'https://your-staging-url.onrender.com' // Update this with your actual Render staging URL
-    RENDER_PRODUCTION_URL = 'https://your-production-url.onrender.com' // Update this with your actual Render production URL
+    AWS_ACCOUNT_ID = 'your-aws-account-id'
+    AWS_REGION = 'us-east-1'
+    ECR_REGISTRY = '${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com'
+    IMAGE_NAME = 'plantbot'
+    ECS_CLUSTER = 'plantbot-cluster'
+    ECS_STAGING_SERVICE = 'plantbot-staging'
+    ECS_PRODUCTION_SERVICE = 'plantbot-production'
+    AWS_STAGING_URL = 'https://your-staging-domain.com' // Update with your staging domain
+    AWS_PRODUCTION_URL = 'https://your-production-domain.com' // Update with your production domain
   }
   
   stages {
@@ -11,36 +17,41 @@ pipeline {
       steps {
         script {
           // Build staging image
-          sh "docker build --target staging -t ${DOCKER_IMAGE}:staging ."
+          sh "docker build --target staging -t ${ECR_REGISTRY}/${IMAGE_NAME}:staging ."
           
-          // Push to Docker Hub
-          sh "docker push ${DOCKER_IMAGE}:staging"
+          // Login to ECR
+          sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
           
-          echo "Staging image built and pushed to Docker Hub"
+          // Push to ECR
+          sh "docker push ${ECR_REGISTRY}/${IMAGE_NAME}:staging"
+          
+          echo "Staging image built and pushed to ECR"
         }
       }
     }
     
-    stage('Deploy to Render Staging') {
+    stage('Deploy to AWS Staging') {
       steps {
         script {
-          // Note: Render will auto-deploy when it detects new image
-          // We just need to wait for deployment to complete
-          echo "Staging image pushed. Render will auto-deploy..."
+          // Update ECS service with new image
+          sh "aws ecs update-service --cluster ${ECS_CLUSTER} --service ${ECS_STAGING_SERVICE} --force-new-deployment"
           
-          // Wait for staging to be healthy (adjust timeout as needed)
-          sh "node scripts/wait-for-healthy.js ${RENDER_STAGING_URL} 300"
+          // Wait for service to be stable
+          sh "aws ecs wait services-stable --cluster ${ECS_CLUSTER} --services ${ECS_STAGING_SERVICE}"
           
-          echo "Staging deployment completed and healthy"
+          // Wait for staging to be healthy
+          sh "node scripts/wait-for-healthy.js ${AWS_STAGING_URL} 300"
+          
+          echo "AWS staging deployment completed and healthy"
         }
       }
     }
     
-    stage('Run Cypress Tests on Render Staging') {
+    stage('Run Cypress Tests on AWS Staging') {
       steps {
         script {
-          // Run Cypress tests against the live Render staging URL
-          sh "CYPRESS_BASE_URL=${RENDER_STAGING_URL} npx cypress run"
+          // Run Cypress tests against the live AWS staging URL
+          sh "CYPRESS_BASE_URL=${AWS_STAGING_URL} npx cypress run"
         }
       }
       post {
@@ -57,29 +68,35 @@ pipeline {
       steps {
         script {
           // Build production image
-          sh "docker build --target Production -t ${DOCKER_IMAGE}:production ."
+          sh "docker build --target production -t ${ECR_REGISTRY}/${IMAGE_NAME}:production ."
           
-          // Push to Docker Hub
-          sh "docker push ${DOCKER_IMAGE}:production"
+          // Login to ECR
+          sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
           
-          echo "Production image built and pushed to Docker Hub"
+          // Push to ECR
+          sh "docker push ${ECR_REGISTRY}/${IMAGE_NAME}:production"
+          
+          echo "Production image built and pushed to ECR"
         }
       }
     }
     
-    stage('Deploy to Render Production') {
+    stage('Deploy to AWS Production') {
       when {
         expression { currentBuild.result == 'SUCCESS' }
       }
       steps {
         script {
-          // Note: Render will auto-deploy when it detects new image
-          echo "Production image pushed. Render will auto-deploy..."
+          // Update ECS service with new image
+          sh "aws ecs update-service --cluster ${ECS_CLUSTER} --service ${ECS_PRODUCTION_SERVICE} --force-new-deployment"
+          
+          // Wait for service to be stable
+          sh "aws ecs wait services-stable --cluster ${ECS_CLUSTER} --services ${ECS_PRODUCTION_SERVICE}"
           
           // Wait for production to be healthy
-          sh "node scripts/wait-for-healthy.js ${RENDER_PRODUCTION_URL} 300"
+          sh "node scripts/wait-for-healthy.js ${AWS_PRODUCTION_URL} 300"
           
-          echo "Production deployment completed and healthy"
+          echo "AWS production deployment completed and healthy"
         }
       }
     }

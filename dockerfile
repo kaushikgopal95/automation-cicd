@@ -1,69 +1,80 @@
 # ----------------------------------- Base Stage ----------------------------------
+FROM node:18-alpine as base
 
-# Base image with node 18 version will act as base image for all env
-FROM node:18 as base
-
-# Sets the default directory inside the container where commands will run.
+# Set working directory
 WORKDIR /app
 
-# Copy package files first (for better caching). All file names starting with package will 
-# be copied to the working directory(./app, ./, .) 
+# Copy package files first for better layer caching
 COPY package*.json ./
 
+# Set default PORT for Azure App Service
+ENV PORT=8080
 
-# ----------------------------------- Development Stage ----------------------------------   
+# ----------------------------------- Dependencies Stage ----------------------------------
+FROM base as dependencies
 
-# installs node 18 as base image - Image 1
+# Install all dependencies (including dev dependencies for building)
+RUN npm install --only=production && npm cache clean --force
+
+# ----------------------------------- Development Stage ----------------------------------
 FROM base as development
 
-#Install all packages dependencies mentioned in package*.json file with a clean install
-RUN npm ci
+# Install all dependencies (including dev dependencies for development)
+RUN npm install && npm cache clean --force
 
-#Copy source code
+# Copy source code
 COPY . .
 
-#Declares the container's listening port - Documentation purpose
-EXPOSE 5173
-#command to run the development server with hot reloads(Hot reloads config will be in compose file)
-#"--","--host","0.0.0.0" is a mandatory input for dev environments when we are running in docker to Accept connections from any network interface"
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]  
+# Expose port for Azure App Service
+EXPOSE 8080
 
-# ----------------------------------- Staging/Test Stage ---------------------------------- 
+# Start development server with hot reload
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "8080"]
 
-# installs node 18 as base image - Image 2
-FROM base as staging  
+# ----------------------------------- Build Stage ----------------------------------
+FROM base as builder
 
-#Install all packages dependencies mentioned in package*.json file with a clean install
-RUN npm ci
+# Install all dependencies (including dev dependencies for building)
+RUN npm install && npm cache clean --force
 
-#Copy source code
-COPY . .  
+# Copy source code
+COPY . .
 
 # Build the app
 RUN npm run build
 
-#Declares the container's listening port - Documentation purpose
-EXPOSE 5173
+# ----------------------------------- Staging Stage ----------------------------------
+FROM base as staging
 
-#Serve the built files
-CMD ["npm", "run", "preview"] 
+# Install all dependencies (including vite for preview)
+RUN npm install && npm cache clean --force
 
-# ----------------------------------- Production Stage ---------------------------------- 
+# Copy built app from builder stage
+COPY --from=builder /app/dist ./dist
 
-# installs node 18 as base image - Image 3
-FROM base as Production
+# Copy package.json for npm commands
+COPY package*.json ./
 
-#Install all packages dependencies mentioned in package*.json under dependencies with a clean install
-RUN npm ci --only=production
+# Expose port for Azure App Service
+EXPOSE 8080
 
-#Copy source code
-COPY . .  
+# Serve the built files
+CMD ["npm", "run", "preview", "--host", "0.0.0.0", "--port", "8080"]
 
-# Build the app
-RUN npm run build
+# ----------------------------------- Production Stage ----------------------------------
+FROM base as production
 
-#Declares the container's listening port - Documentation purpose
-EXPOSE 5173
+# Install all dependencies (including vite for preview)
+RUN npm install && npm cache clean --force
 
-#Serve the built files
-CMD ["npm", "run", "preview"] 
+# Copy built app from builder stage
+COPY --from=builder /app/dist ./dist
+
+# Copy package.json for npm commands
+COPY package*.json ./
+
+# Expose port for Azure App Service
+EXPOSE 8080
+
+# Serve the built files
+CMD ["npm", "run", "preview", "--host", "0.0.0.0", "--port", "8080"]
