@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { ShoppingCart, Heart, Star, ChevronRight, Info } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { getProductImage } from "@/utils/product-utils";
 
 export interface Product {
   id: string;
@@ -49,15 +51,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const [imageError, setImageError] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const navigate = useNavigate();
-  const { data: user } = useQuery({
-    queryKey: ['user'],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session?.user || null;
-    },
-  });
 
   const handleAddToCart = async () => {
     if (!user) {
@@ -109,55 +105,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     }
   };
 
-  const getProductImage = () => {
-    // First try to get a local image based on product name
-    const productName = product.name.toLowerCase().trim();
-    
-    // Map of plant names to their corresponding local images
-    const plantImages = {
-      // Monstera variations
-      'monstera': '/monstera.png',
-      'monstera deliciosa': '/monstera.png',
-      
-      // Rubber plant variations
-      'rubber': '/rubber.png',
-      'rubber plant': '/rubber.png',
-      'ficus elastica': '/rubber.png',
-      
-      // Other plants
-      'snake': '/snake.png',
-      'snake plant': '/snake.png',
-      'fiddle': '/fiddle.png',
-      'fiddle leaf': '/fiddle.png',
-      'fiddle leaf fig': '/fiddle.png',
-      'pothos': '/golden.png',
-      'golden pothos': '/golden.png',
-      'zz': '/zz.png',
-      'zz plant': '/zz.png',
-      'zamioculcas': '/zz.png'
-    };
-
-    // First, try exact match
-    if (plantImages[productName]) {
-      return plantImages[productName];
-    }
-    
-    // Then try partial matches
-    for (const [key, value] of Object.entries(plantImages)) {
-      if (productName.includes(key)) {
-        return value;
-      }
-    }
-    
-    // Fallback to the product's image_url if available
-    if (product.image_url && !imageError) {
-      return product.image_url;
-    }
-    
-    // Final fallback to default plant image
-    return '/default-plant.png';
-  };
-
   const handleViewDetails = () => {
     navigate(`/products/${product.id}`);
   };
@@ -172,7 +119,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           onClick={handleViewDetails}
         >
           <img
-            src={getProductImage()}
+            src={getProductImage(product.name)}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             onError={() => setImageError(true)}

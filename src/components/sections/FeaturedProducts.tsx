@@ -1,12 +1,11 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { ProductCard } from "@/components/products/ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getFeaturedProducts, searchProducts } from "@/data/products";
 import { Input } from "@/components/ui/input";
+import { useProductSearch } from "@/hooks/use-product-search";
 
 const CARD_WIDTH = 320; // Approximate width of each product card including gap
 
@@ -44,17 +43,8 @@ export const FeaturedProducts = () => {
     }
   }, [searchQuery]);
 
-  // Fetch products based on search term
-  const { data: products = [], isLoading, error } = useQuery({
-    queryKey: ['products', searchTerm],
-    queryFn: async () => {
-      if (searchTerm) {
-        return searchProducts(searchTerm);
-      }
-      return getFeaturedProducts();
-    },
-    refetchOnWindowFocus: false,
-  });
+  // Use the new search hook
+  const { data: products = [], isLoading, error } = useProductSearch(searchTerm, 6);
 
   // Handle window resize to update visible cards
   useEffect(() => {
@@ -92,6 +82,46 @@ export const FeaturedProducts = () => {
           <div className="text-center">
             <h2 className="text-2xl text-red-500">Error loading products</h2>
             <p className="text-gray-400">Please try again later</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <section id="featured-products" className="py-20 bg-gray-950">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-100 mb-4">Featured Products</h2>
+            <p className="text-gray-400">Discover our most popular plants</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="space-y-4">
+                <Skeleton className="h-64 w-full rounded-lg" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <section id="featured-products" className="py-20 bg-gray-950">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-gray-100 mb-4">Featured Products</h2>
+            <p className="text-gray-400">
+              {searchTerm ? `No products found for "${searchTerm}"` : 'No featured products available'}
+            </p>
           </div>
         </div>
       </section>

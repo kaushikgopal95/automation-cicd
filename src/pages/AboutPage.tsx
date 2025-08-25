@@ -19,7 +19,7 @@ export const AboutPage = () => {
         
         <div className="space-y-8">
           <div className="text-center">
-            <h1 className="text-4xl font-bold mb-4">About PlantCraft</h1>
+            <h1 className="text-4xl font-bold mb-4">About PlantBot</h1>
             <p className="text-xl text-gray-400 max-w-3xl mx-auto">
               Bringing nature's beauty into your home with carefully selected plants and handcrafted pottery.
             </p>
@@ -27,8 +27,8 @@ export const AboutPage = () => {
           
           <div className="bg-gray-900 rounded-xl p-8 space-y-6">
             <h2 className="text-2xl font-bold">Our Story</h2>
-            <p className="text-gray-300 leading-relaxed">
-              Founded in 2023, PlantCraft began as a small passion project with a simple mission: to make indoor gardening accessible to everyone. 
+            <p className="text-gray-600 leading-relaxed">
+              Founded in 2023, PlantBot began as a small passion project with a simple mission: to make indoor gardening accessible to everyone.
               What started as a local plant shop has grown into a community of plant lovers who believe in the power of nature to transform spaces and lives.
             </p>
             <p className="text-gray-300 leading-relaxed">
@@ -92,7 +92,7 @@ export const AboutPage = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-300 mb-2">Contact</h3>
-                <p>hello@plantcraft.com<br />(555) 123-4567</p>
+                <p>hello@plantbot.com<br />(555) 123-4567</p>
               </div>
             </div>
           </div>

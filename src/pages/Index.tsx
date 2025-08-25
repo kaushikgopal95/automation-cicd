@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/Header";
 import { Hero } from "@/components/sections/Hero";
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
@@ -10,11 +10,29 @@ import { Newsletter } from "@/components/sections/Newsletter";
 import { Footer } from "@/components/layout/Footer";
 import { AuthDrawer } from "@/components/auth/AuthDrawer";
 import { CartSidebar } from "@/components/cart/CartSidebar";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   const [showAuthDrawer, setShowAuthDrawer] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [showCart, setShowCart] = useState(false);
+  const { user } = useAuth();
+
+  // Listen for custom cart events from other pages
+  useEffect(() => {
+    const handleCartEvent = (event: CustomEvent) => {
+      if (event.detail?.action === 'open') {
+        setShowCart(true);
+      }
+    };
+
+    window.addEventListener('openCart', handleCartEvent as EventListener);
+    
+    return () => {
+      window.removeEventListener('openCart', handleCartEvent as EventListener);
+    };
+  }, []);
+
   const handleAuthClick = (mode: 'signin' | 'signup' = 'signin') => {
     setAuthMode(mode);
     setShowAuthDrawer(true);
@@ -24,6 +42,19 @@ const Index = () => {
     setShowAuthDrawer(false);
   };
 
+  // Handle Get Started button click based on auth status
+  const handleGetStarted = () => {
+    if (user) {
+      // User is logged in, scroll to featured products
+      const featuredSection = document.getElementById('featured-products');
+      if (featuredSection) {
+        featuredSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      // User is not logged in, open signup drawer
+      handleAuthClick('signup');
+    }
+  };
 
 
   return (
@@ -35,7 +66,7 @@ const Index = () => {
       
       <main>
         <section id="hero">
-          <Hero onGetStarted={() => handleAuthClick('signup')} />
+          <Hero onGetStarted={handleGetStarted} />
         </section>
         <section id="featured-products">
           <FeaturedProducts />

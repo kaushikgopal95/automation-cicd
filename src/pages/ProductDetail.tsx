@@ -1,54 +1,14 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ShoppingCart, Star } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Star, LogOut, ShoppingBag } from "lucide-react";
 import { useState, useEffect } from "react";
-import { mockProducts } from "@/data/products";
-
-// Get product image based on product name
-const getProductImage = (productName: string) => {
-  const name = productName.toLowerCase().trim();
-  
-  // Map of plant names to their corresponding local images - must match ProductCard.tsx
-  const plantImages = {
-    // Monstera variations
-    'monstera': '/monstera.png',
-    'monstera deliciosa': '/monstera.png',
-    
-    // Rubber plant variations
-    'rubber': '/rubber.png',
-    'rubber plant': '/rubber.png',
-    'ficus elastica': '/rubber.png',
-    
-    // Other plants
-    'snake': '/snake.png',
-    'snake plant': '/snake.png',
-    'fiddle': '/fiddle.png',
-    'fiddle leaf': '/fiddle.png',
-    'fiddle leaf fig': '/fiddle.png',
-    'pothos': '/golden.png',
-    'golden pothos': '/golden.png',
-    'zz': '/zz.png',
-    'zz plant': '/zz.png',
-    'zamioculcas': '/zz.png'
-  };
-
-  // First, try exact match
-  if (plantImages[name]) {
-    return plantImages[name];
-  }
-  
-  // Then try partial matches
-  for (const [key, value] of Object.entries(plantImages)) {
-    if (name.includes(key)) {
-      return value;
-    }
-  }
-  
-  // Fallback to default plant image
-  return '/default-plant.png';
-};
+import { useProductById } from "@/hooks/use-product-search";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/use-toast";
+import { CartSidebar } from "@/components/cart/CartSidebar";
+import { getProductImage } from "@/utils/product-utils";
 
 // Simple Image Component
 const ProductImage = ({ src, alt }: { src: string; alt: string }) => {
@@ -101,92 +61,81 @@ export const ProductDetail = () => {
   const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
   const [productImage, setProductImage] = useState<string>('');
+  const [showCart, setShowCart] = useState(false);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   
-  const { data: product, isLoading, error } = useQuery({
-    queryKey: ['product', productId],
-    queryFn: async () => {
-      if (!productId) throw new Error('No product ID provided');
-      
-      // First try to get from mock data if using mock data
-      if (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        // Try to find by ID first
-        let mockProduct = mockProducts.find(p => p.id === productId);
-        
-        // If not found by ID and productId is a number, try by array index
-        if (!mockProduct && !isNaN(Number(productId))) {
-          const index = Number(productId) - 1;
-          if (index >= 0 && index < mockProducts.length) {
-            mockProduct = mockProducts[index];
-          }
-        }
-        
-        if (mockProduct) {
-          // Ensure we have at least one image
-          if (!mockProduct.images || mockProduct.images.length === 0) {
-            mockProduct.images = [
-              `https://source.unsplash.com/random/800x800/?plant-${mockProduct.id}`,
-              `https://source.unsplash.com/random/800x800/?${mockProduct.name.split(' ').join('-')}`,
-              `https://source.unsplash.com/random/800x800/?${mockProduct.id}`
-            ];
-          }
-          return mockProduct;
-        }
-      }
-      
-      // If not found in mock data or in production, try Supabase
-      try {
-        const { data, error: queryError } = await supabase
-          .from('products')
-          .select(`
-            *,
-            categories(*)
-          `)
-          .eq('id', productId)
-          .single();
-        
-        if (queryError) throw queryError;
-        if (!data) throw new Error('Product not found');
-        
-        // Ensure we have at least one image
-        if (!data.images || data.images.length === 0) {
-          data.images = [
-            data.image_url || `https://source.unsplash.com/random/800x800/?plant-${data.id}`,
-            `https://source.unsplash.com/random/800x800/?${data.name.split(' ').join('-')}`,
-            `https://source.unsplash.com/random/800x800/?${data.id}`
-          ];
-        }
-        
-        return data;
-      } catch (err) {
-        console.error('Error fetching product:', err);
-        throw new Error(`Failed to load product: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      }
-    },
-    enabled: !!productId,
-    retry: 1,
-  });
+  const { data: product, isLoading, error } = useProductById(productId);
 
   // Update product image when product data changes
   useEffect(() => {
     if (product) {
-      // Always try to get image based on product name first
-      if (product.name) {
-        setProductImage(getProductImage(product.name));
-      }
-      // Fallback to the product's image_url if name-based lookup fails
-      else if (product.image_url) {
+      // Use the product's image_url if available, otherwise fallback to name-based mapping
+      if (product.image_url) {
         setProductImage(product.image_url);
-      }
-      // Final fallback to a placeholder
-      else {
-        setProductImage('https://placehold.co/800x800/1a1a1a/4d7c0f?text=Plant+Image&font=montserrat');
+      } else if (product.name) {
+        setProductImage(getProductImage(product.name));
+      } else {
+        setProductImage('/placeholder.svg');
       }
     }
   }, [product]);
 
   const handleAddToCart = async () => {
-    // TODO: Implement add to cart functionality
-    console.log('Added to cart:', { productId, quantity });
+    if (!product) return;
+    
+    if (!user) {
+      toast({
+        title: 'Sign in required',
+        description: 'Please sign in to add items to your cart',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('cart')
+        .upsert({
+          user_id: user.id,
+          product_id: product.id,
+          quantity,
+        }, {
+          onConflict: 'user_id,product_id'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Added to cart',
+        description: `${quantity} × ${product.name} has been added to your cart`,
+      });
+
+      // Invalidate cart query to refresh the cart
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add item to cart. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  const handleCartClick = () => {
+    // Open cart sidebar locally on this page
+    setShowCart(true);
   };
 
   if (isLoading) {
@@ -260,105 +209,163 @@ export const ProductDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 p-8">
-      <div className="container mx-auto">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate(-1)}
-          className="mb-6 flex items-center gap-2 hover:bg-gray-800"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Products
-        </Button>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-4">
-            <ProductImage 
-              src={productImage} 
-              alt={product.name} 
-            />
-          </div>
-          
-          <div className="space-y-6">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                {product.categories?.name && (
-                  <span className="text-sm text-gray-400">
-                    {product.categories.name}
-                  </span>
-                )}
-              </div>
-              <h1 className="text-3xl font-bold">{product.name}</h1>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="flex text-yellow-400">
-                  {[...Array(5)].map((_, i) => (
-                    <Star 
-                      key={i} 
-                      className={`h-5 w-5 ${i < (product.rating || 0) ? 'fill-current' : ''}`} 
-                    />
-                  ))}
-                </div>
-                <span className="text-sm text-gray-400">
-                  ({product.review_count || 0} reviews)
-                </span>
-              </div>
-            </div>
+    <div className="min-h-screen bg-gray-950 text-gray-100">
+      {/* Navigation Header */}
+      <div className="sticky top-0 z-40 bg-gray-900/95 backdrop-blur border-b border-gray-700">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 hover:bg-gray-800"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
             
-            <p className="text-2xl font-bold text-green-400">
-              ${product.price?.toFixed(2)}
-            </p>
-            
-            <p className="text-gray-300">
-              {product.description || 'No description available.'}
-            </p>
-            
-            <div className="flex items-center gap-4 pt-4">
-              <div className="flex items-center border border-gray-700 rounded-md">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-10 w-10"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                >
-                  -
-                </Button>
-                <span className="w-10 text-center">{quantity}</span>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-10 w-10"
-                  onClick={() => setQuantity(quantity + 1)}
-                >
-                  +
-                </Button>
-              </div>
-              
-              <Button 
-                size="lg" 
-                className="flex-1 bg-green-600 hover:bg-green-700"
-                onClick={handleAddToCart}
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                onClick={handleCartClick}
+                className="flex items-center gap-2 hover:bg-gray-800"
               >
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                Add to Cart
+                <ShoppingBag className="h-4 w-4" />
+                Cart
               </Button>
-            </div>
-            
-            <div className="pt-6 border-t border-gray-800">
-              <h3 className="font-semibold mb-2">Product Details</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm text-gray-400">
-                <div>
-                  <p className="text-gray-500">Category</p>
-                  <p>{product.categories?.name || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Availability</p>
-                  <p className="text-green-400">In Stock</p>
-                </div>
-              </div>
+              
+              {user && (
+                <Button
+                  variant="ghost"
+                  onClick={handleSignOut}
+                  className="flex items-center gap-2 hover:bg-gray-800 text-red-400 hover:text-red-300"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Product Image - Reduced Size */}
+          <div className="lg:col-span-1">
+            <div className="max-w-sm mx-auto">
+              <ProductImage 
+                src={productImage} 
+                alt={product.name}
+              />
+            </div>
+          </div>
+          
+          {/* Product Info */}
+          <div className="lg:col-span-2 space-y-6">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-100 mb-2">{product.name}</h1>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                  ))}
+                </div>
+                <span className="text-gray-400">(0 reviews)</span>
+              </div>
+              <div className="text-3xl font-bold text-green-400">${product.price}</div>
+            </div>
+            
+            <p className="text-gray-300 text-lg leading-relaxed">{product.description}</p>
+            
+            {/* Quantity Selector */}
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-medium text-gray-300">Quantity:</label>
+              <div className="flex items-center border border-gray-600 rounded-lg">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="px-3 py-1 hover:bg-gray-800"
+                >
+                  -
+                </Button>
+                <span className="px-4 py-2 min-w-[3rem] text-center">{quantity}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="px-3 py-1 hover:bg-gray-800"
+                >
+                  +
+                </Button>
+              </div>
+            </div>
+            
+            {/* Add to Cart Button */}
+            <Button
+              size="lg"
+              onClick={handleAddToCart}
+              disabled={product.stock_quantity === 0}
+              className="bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold px-8"
+            >
+              <ShoppingCart className="mr-2 h-5 w-5" />
+              {product.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+            </Button>
+            
+            {/* Dynamic Stock Status */}
+            <div className="text-sm text-gray-400">
+              {product.stock_quantity > 0 ? (
+                <span className="text-green-400">
+                  In Stock ({product.stock_quantity} available)
+                </span>
+              ) : (
+                <span className="text-red-400">Out of Stock</span>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* FAQ Section */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold text-gray-100 mb-8 text-center">Frequently Asked Questions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-100 mb-3">How do I care for this plant?</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                This plant thrives in bright, indirect light and requires moderate watering. Allow the soil to dry slightly between waterings and avoid overwatering.
+              </p>
+            </div>
+            
+            <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-100 mb-3">What's the delivery time?</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                We offer free shipping on orders over $50. Standard delivery takes 3-5 business days, while express shipping is available for next-day delivery.
+              </p>
+            </div>
+            
+            <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-100 mb-3">Is this plant pet-friendly?</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                Most of our plants are pet-friendly, but we recommend keeping them out of reach of curious pets. Check individual product descriptions for specific details.
+              </p>
+            </div>
+            
+            <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-100 mb-3">What's your return policy?</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                We offer a 30-day care guarantee. If your plant doesn't thrive within 30 days, we'll replace it or provide a full refund.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Cart Sidebar */}
+      <CartSidebar 
+        isOpen={showCart}
+        onClose={() => setShowCart(false)}
+      />
     </div>
   );
 };

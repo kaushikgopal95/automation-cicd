@@ -1,23 +1,25 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Leaf, Heart, Star } from "lucide-react";
+import { Leaf, Star, Heart, ArrowRight } from "lucide-react";
+import { useFeaturedProducts } from "@/hooks/use-product-search";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface HeroProps {
   onGetStarted?: () => void;
 }
 
 export const Hero = ({ onGetStarted }: HeroProps) => {
+  const { user, isLoading } = useAuth();
+  
+  // Fetch featured products count for dynamic stats
+  const { data: featuredProducts = [] } = useFeaturedProducts(50);
+  const featuredProductsCount = featuredProducts.length;
+
   const handleShopNow = () => {
     const featuredSection = document.getElementById('featured-products');
     if (featuredSection) {
       featuredSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  const handleLearnMore = () => {
-    const categoriesSection = document.getElementById('categories');
-    if (categoriesSection) {
-      categoriesSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -71,28 +73,20 @@ export const Hero = ({ onGetStarted }: HeroProps) => {
             <Button 
               size="lg" 
               className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg font-semibold group"
-              onClick={onGetStarted || handleShopNow}
+              onClick={isLoading ? undefined : (onGetStarted || handleShopNow)}
               data-testid="get-started-btn"
+              disabled={isLoading}
             >
-              {onGetStarted ? 'Get Started' : 'Shop Now'}
+              {isLoading ? 'Loading...' : user ? 'Shop Now' : 'Get Started'}
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
             
-            <Button 
-              variant="outline" 
-              size="lg"
-              onClick={handleLearnMore}
-              className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-green-400 px-8 py-4 text-lg font-semibold shadow-lg"
-              data-testid="learn-more-btn"
-            >
-              Learn More
-            </Button>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 pt-16 border-t border-gray-700">
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-400 mb-2" data-testid="stat-products">50+</div>
+              <div className="text-3xl font-bold text-green-400 mb-2" data-testid="stat-products">{featuredProductsCount}+</div>
               <div className="text-gray-400">Premium Products</div>
             </div>
             <div className="text-center">

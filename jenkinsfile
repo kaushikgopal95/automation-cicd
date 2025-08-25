@@ -1,20 +1,47 @@
 pipeline {
   agent any
+  environment {
+    DOCKER_IMAGE = 'kaushikgopal95/plantbot'
+    RENDER_STAGING_URL = 'https://your-staging-url.onrender.com' // Update this with your actual Render staging URL
+    RENDER_PRODUCTION_URL = 'https://your-production-url.onrender.com' // Update this with your actual Render production URL
+  }
+  
   stages {
-    stage('Build Staging Image (Optional)') { // Build the QA (staging) image locally for fast feedback
+    stage('Build and Push Staging Image') {
       steps {
-        sh 'docker-compose -f docker-compose.qa.yml build'
+        script {
+          // Build staging image
+          sh "docker build --target staging -t ${DOCKER_IMAGE}:staging ."
+          
+          // Push to Docker Hub
+          sh "docker push ${DOCKER_IMAGE}:staging"
+          
+          echo "Staging image built and pushed to Docker Hub"
+        }
       }
     }
-    stage('Deploy to AWS Staging') { // Deploy the app to AWS staging server
+    
+    stage('Deploy to Render Staging') {
       steps {
-        sh 'ssh ec2-user@your-aws-staging-server "cd /path/to/app && git pull && docker-compose -f docker-compose.qa.yml up -d --build"'
+        script {
+          // Note: Render will auto-deploy when it detects new image
+          // We just need to wait for deployment to complete
+          echo "Staging image pushed. Render will auto-deploy..."
+          
+          // Wait for staging to be healthy (adjust timeout as needed)
+          sh "node scripts/wait-for-healthy.js ${RENDER_STAGING_URL} 300"
+          
+          echo "Staging deployment completed and healthy"
+        }
       }
     }
-    stage('Run Cypress Tests on AWS Staging') { // Run Cypress tests against the live AWS staging URL
+    
+    stage('Run Cypress Tests on Render Staging') {
       steps {
-        // Replace the URL with your actual AWS staging URL in the test file
-        sh 'npx cypress run'
+        script {
+          // Run Cypress tests against the live Render staging URL
+          sh "CYPRESS_BASE_URL=${RENDER_STAGING_URL} npx cypress run"
+        }
       }
       post {
         always {
@@ -22,12 +49,38 @@ pipeline {
         }
       }
     }
-    stage('Deploy to AWS Production') { // Deploy the app to AWS production server if tests pass
+    
+    stage('Build and Push Production Image') {
       when {
         expression { currentBuild.result == 'SUCCESS' }
       }
       steps {
-        sh 'ssh ec2-user@your-aws-production-server "cd /path/to/app && git pull && docker-compose -f docker-compose.prod.yml up -d --build"'
+        script {
+          // Build production image
+          sh "docker build --target Production -t ${DOCKER_IMAGE}:production ."
+          
+          // Push to Docker Hub
+          sh "docker push ${DOCKER_IMAGE}:production"
+          
+          echo "Production image built and pushed to Docker Hub"
+        }
+      }
+    }
+    
+    stage('Deploy to Render Production') {
+      when {
+        expression { currentBuild.result == 'SUCCESS' }
+      }
+      steps {
+        script {
+          // Note: Render will auto-deploy when it detects new image
+          echo "Production image pushed. Render will auto-deploy..."
+          
+          // Wait for production to be healthy
+          sh "node scripts/wait-for-healthy.js ${RENDER_PRODUCTION_URL} 300"
+          
+          echo "Production deployment completed and healthy"
+        }
       }
     }
   }

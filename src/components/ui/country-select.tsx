@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
+import countriesData from 'world-countries';
 import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,37 +31,15 @@ interface Country {
 
 export function CountrySelect({ value, onChange, className }: CountrySelectProps) {
   const [open, setOpen] = useState(false);
-  const [countries, setCountries] = useState<Country[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  // Fetch countries from Supabase
-  useEffect(() => {
-    const fetchCountries = async () => {
-      try {
-        const { data, error } = await fetch('/api/countries').then(res => res.json());
-        
-        if (error) throw error;
-        
-        setCountries(data || []);
-      } catch (error) {
-        console.error("Error fetching countries:", error);
-        // Fallback to a default list if the API call fails
-        setCountries([
-          { code: 'US', name: 'United States', emoji: '🇺🇸' },
-          { code: 'GB', name: 'United Kingdom', emoji: '🇬🇧' },
-          { code: 'CA', name: 'Canada', emoji: '🇨🇦' },
-          { code: 'AU', name: 'Australia', emoji: '🇦🇺' },
-          { code: 'IN', name: 'India', emoji: '🇮🇳' },
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCountries();
-  }, []);
+  // Map world-countries data to Country[]
+  const countries: Country[] = countriesData.map((country: any) => ({
+    code: country.cca2,
+    name: country.name.common,
+    emoji: country.flag || '',
+  }));
 
   // Filter countries based on search term
   const filteredCountries = countries.filter(country =>
@@ -104,9 +83,9 @@ export function CountrySelect({ value, onChange, className }: CountrySelectProps
           <CommandEmpty>No country found.</CommandEmpty>
           <CommandGroup>
             <CommandList>
-              {loading ? (
+              {filteredCountries.length === 0 ? (
                 <div className="py-6 text-center text-sm text-muted-foreground">
-                  Loading countries...
+                  No country found.
                 </div>
               ) : (
                 filteredCountries.map((country) => (

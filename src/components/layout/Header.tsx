@@ -3,9 +3,19 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, User, Menu, X, Leaf } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { 
+  Menu, 
+  X, 
+  User, 
+  ShoppingCart, 
+  LogOut,
+  ChevronDown,
+  Leaf
+} from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { AuthDrawer } from "@/components/auth/AuthDrawer";
 
 interface HeaderProps {
   onAuthClick: (mode?: 'signin' | 'signup') => void;
@@ -89,10 +99,14 @@ export const Header = ({ onAuthClick, onCartClick }: HeaderProps) => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <Leaf className="h-6 w-6 text-green-400" />
-            <h1 className="text-2xl font-bold text-green-400" data-testid="logo">
-              PlantCraft
+          <Link to="/" className="flex items-center space-x-3">
+            <img 
+              src="/logo.png" 
+              alt="PlantBot Logo" 
+              className="h-8 w-8 object-contain"
+            />
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent" data-testid="logo">
+              PlantBot
             </h1>
           </Link>
 
@@ -119,16 +133,35 @@ export const Header = ({ onAuthClick, onCartClick }: HeaderProps) => {
           <div className="flex items-center space-x-4">
             {user ? (
               <div className="flex items-center space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="text-gray-300 hover:text-green-400 hover:bg-gray-800"
-                  data-testid="sign-out-btn"
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  Sign Out
-                </Button>
+                <div className="relative group">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-300 hover:text-green-400 hover:bg-gray-800 flex items-center gap-1"
+                  >
+                    <User className="h-4 w-4" />
+                    Profile
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                  
+                  {/* Dropdown Menu */}
+                  <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="py-1">
+                      <button
+                        onClick={() => navigate('/profile')}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                      >
+                        View Profile
+                      </button>
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="hidden md:flex items-center space-x-3">

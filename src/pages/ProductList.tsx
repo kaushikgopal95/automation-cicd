@@ -1,23 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { ProductCard } from "@/components/products/ProductCard";
 import { useNavigate } from "react-router-dom";
+import { useProductSearch } from "@/hooks/use-product-search";
 
 export const ProductList = () => {
   const navigate = useNavigate();
 
-  const { data: products, isLoading } = useQuery({
-    queryKey: ['products'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('name');
-      
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  const { data: products, isLoading } = useProductSearch("", 50); // Get all products
 
   if (isLoading) {
     return (

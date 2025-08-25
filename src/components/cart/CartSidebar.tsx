@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { CartItem } from "./CartItem";
 import { ShoppingBag, CreditCard } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -15,14 +17,9 @@ interface CartSidebarProps {
 export const CartSidebar = ({ isOpen, onClose }: CartSidebarProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
-  const { data: user } = useQuery({
-    queryKey: ['user'],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session?.user || null;
-    },
-  });
+  const { user } = useAuth();
 
   const { data: cartItems = [], isLoading } = useQuery({
     queryKey: ['cart', user?.id],
@@ -41,72 +38,24 @@ export const CartSidebar = ({ isOpen, onClose }: CartSidebarProps) => {
 
   const totalAmount = cartItems.reduce((sum, item) => sum + (item.products?.price || 0) * item.quantity, 0);
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (!user || cartItems.length === 0) return;
-
-    try {
-      // Create order
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user.id,
-          total_amount: totalAmount,
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Create order items
-      const orderItems = cartItems.map(item => ({
-        order_id: order.id,
-        product_id: item.product_id,
-        quantity: item.quantity,
-        price: item.products?.price || 0,
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
-
-      // Clear cart
-      const { error: clearError } = await supabase
-        .from('cart')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (clearError) throw clearError;
-
-      toast({
-        title: "Order placed successfully!",
-        description: `Your order #${order.id.slice(0, 8)} has been created.`,
-      });
-
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
-      onClose();
-    } catch (error) {
-      toast({
-        title: "Checkout failed",
-        description: "Please try again later",
-        variant: "destructive",
-      });
-    }
+    
+    onClose();
+    navigate('/checkout');
   };
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="bg-gray-900 border-gray-800 text-gray-100 w-full sm:max-w-lg" data-testid="cart-sidebar">
-        <SheetHeader>
+      <SheetContent className="bg-gray-900 border-gray-800 text-gray-100 w-full sm:max-w-lg h-full flex flex-col pb-8" data-testid="cart-sidebar">
+        <SheetHeader className="flex-shrink-0">
           <SheetTitle className="text-gray-100 flex items-center space-x-2" data-testid="cart-title">
             <ShoppingBag className="h-5 w-5" />
             <span>Shopping Cart ({cartItems.length})</span>
           </SheetTitle>
         </SheetHeader>
 
-        <div className="flex flex-col h-full mt-6">
+        <div className="flex flex-col flex-1 mt-6 min-h-0">
           {!user ? (
             <div className="flex-1 flex items-center justify-center text-center">
               <div>
@@ -124,13 +73,21 @@ export const CartSidebar = ({ isOpen, onClose }: CartSidebarProps) => {
             </div>
           ) : (
             <>
-              <div className="flex-1 overflow-auto space-y-4" data-testid="cart-items">
-                {cartItems.map((item) => (
-                  <CartItem key={item.id} item={item} />
-                ))}
+              {/* Cart Items - Scrollable Area with Proper Height Management */}
+              <div className="flex-1 overflow-hidden min-h-0">
+                <div className="h-full overflow-y-auto pr-2 space-y-4" 
+                     style={{
+                       scrollbarWidth: 'thin',
+                       scrollbarColor: '#4B5563 #1F2937'
+                     }}>
+                  {cartItems.map((item) => (
+                    <CartItem key={item.id} item={item} />
+                  ))}
+                </div>
               </div>
 
-              <div className="border-t border-gray-800 pt-4 space-y-4">
+              {/* Checkout Section - Always Visible with Proper Spacing */}
+              <div className="border-t border-gray-800 pt-4 space-y-4 mt-4 flex-shrink-0 pb-6">
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Total:</span>
                   <span className="text-green-400" data-testid="cart-total">${totalAmount.toFixed(2)}</span>
@@ -138,10 +95,10 @@ export const CartSidebar = ({ isOpen, onClose }: CartSidebarProps) => {
 
                 <Button
                   onClick={handleCheckout}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white h-14 text-base font-semibold"
                   data-testid="checkout-btn"
                 >
-                  <CreditCard className="h-4 w-4 mr-2" />
+                  <CreditCard className="h-5 w-5 mr-2" />
                   Proceed to Checkout
                 </Button>
               </div>

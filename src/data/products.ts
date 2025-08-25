@@ -1,7 +1,7 @@
 // Mock product data for development and testing
 export const mockProducts = [
   {
-    id: '1',
+    id: '550e8400-e29b-41d4-a716-446655440001',
     name: 'Monstera Deliciosa',
     description: 'A popular tropical plant with large, glossy leaves with natural holes.',
     price: 34.99,
@@ -31,7 +31,7 @@ export const mockProducts = [
     ]
   },
   {
-    id: '2',
+    id: '550e8400-e29b-41d4-a716-446655440002',
     name: 'Snake Plant',
     description: 'A hardy, low-maintenance plant with tall, upright leaves that purify the air.',
     price: 24.99,
@@ -61,7 +61,7 @@ export const mockProducts = [
     ]
   },
   {
-    id: '3',
+    id: '550e8400-e29b-41d4-a716-446655440003',
     name: 'Fiddle Leaf Fig',
     description: 'A stylish plant with large, violin-shaped leaves that make a bold statement.',
     price: 49.99,
@@ -91,7 +91,7 @@ export const mockProducts = [
     ]
   },
   {
-    id: '4',
+    id: '550e8400-e29b-41d4-a716-446655440004',
     name: 'ZZ Plant',
     description: 'An extremely hardy plant that thrives on neglect and purifies the air.',
     price: 29.99,
@@ -121,7 +121,7 @@ export const mockProducts = [
     ]
   },
   {
-    id: '5',
+    id: '550e8400-e29b-41d4-a716-446655440005',
     name: 'Pothos Golden',
     description: 'A versatile trailing plant with heart-shaped leaves that can grow in various conditions.',
     price: 19.99,
@@ -151,7 +151,7 @@ export const mockProducts = [
     ]
   },
   {
-    id: '6',
+    id: '550e8400-e29b-41d4-a716-446655440006',
     name: 'Rubber Plant',
     description: 'A striking plant with large, glossy leaves that can grow quite tall indoors.',
     price: 39.99,
@@ -181,7 +181,7 @@ export const mockProducts = [
     ]
   },
   {
-    id: '7',
+    id: '550e8400-e29b-41d4-a716-446655440007',
     name: 'Peace Lily',
     description: 'A beautiful flowering plant that thrives in low light and helps purify the air.',
     price: 27.99,
@@ -211,7 +211,7 @@ export const mockProducts = [
     ]
   },
   {
-    id: '8',
+    id: '550e8400-e29b-41d4-a716-446655440008',
     name: 'String of Pearls',
     description: 'A unique trailing succulent with small, bead-like leaves that cascade beautifully.',
     price: 22.99,
