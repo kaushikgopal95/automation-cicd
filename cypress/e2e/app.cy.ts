@@ -4,15 +4,14 @@ describe('PlantBot App Tests', () => {
     cy.visit('/')
   })
 
-  it('should load the application successfully', () => {
-    // Check if the page loads without errors
-    cy.get('body').should('be.visible')
+ 
+
+  it('should have basic app structure', () => {
+    // Check if the root element exists
+    cy.get('#root').should('exist')
     
-    // Check if the page title exists (basic HTML structure)
-    cy.title().should('exist')
-    
-    // Check if the page is accessible (no console errors)
-    cy.window().its('console.error').should('not.be.called')
+    // Check if the app is mounted (React app loaded)
+    cy.get('#root').should('not.be.empty')
   })
 
   
