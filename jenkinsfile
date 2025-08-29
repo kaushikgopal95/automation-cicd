@@ -21,13 +21,13 @@ pipeline {
         script {
           withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
             // Build staging image
-            sh "docker build --target staging -t ${DOCKER_USERNAME}/${IMAGE_NAME}:staging ."
+            bat "docker build --target staging -t %DOCKER_USERNAME%/%IMAGE_NAME%:staging ."
             
             // Login to Docker Hub
-            sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
+            bat "echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin"
             
             // Push to Docker Hub
-            sh "docker push ${DOCKER_USERNAME}/${IMAGE_NAME}:staging"
+            bat "docker push %DOCKER_USERNAME%/%IMAGE_NAME%:staging"
             
             echo "Staging image built and pushed to Docker Hub"
           }
@@ -39,13 +39,13 @@ pipeline {
       steps {
         script {
           // Stop and remove existing staging containers
-          sh "docker-compose -f docker-compose.staging.yml down || true"
+          bat "docker-compose -f docker-compose.staging.yml down || exit 0"
           
           // Start new staging environment
-          sh "docker-compose -f docker-compose.staging.yml up -d"
+          bat "docker-compose -f docker-compose.staging.yml up -d"
           
           // Wait for staging to be healthy
-          sh "node scripts/wait-for-healthy.js ${STAGING_URL} 300"
+          bat "node scripts/wait-for-healthy.js %STAGING_URL% 300"
           
           echo "Local staging deployment completed and healthy"
         }
@@ -53,7 +53,7 @@ pipeline {
       post {
         failure {
           echo "Staging deployment failed - checking logs"
-          sh "docker-compose -f docker-compose.staging.yml logs"
+          bat "docker-compose -f docker-compose.staging.yml logs"
         }
       }
     }
@@ -62,7 +62,7 @@ pipeline {
       steps {
         script {
           // Run Cypress tests against the live local staging URL
-          sh "CYPRESS_BASE_URL=${STAGING_URL} npx cypress run"
+          bat "set CYPRESS_BASE_URL=%STAGING_URL% && npx cypress run"
         }
       }
       post {
@@ -81,14 +81,14 @@ pipeline {
           // Configure Git credentials
           withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
             // Set Git configuration
-            sh 'git config --global user.email "jenkins@example.com"'
-            sh 'git config --global user.name "Jenkins Pipeline"'
+            bat 'git config --global user.email "jenkins@example.com"'
+            bat 'git config --global user.name "Jenkins Pipeline"'
             
             // Checkout main branch and merge staging
-            sh 'git checkout main'
-            sh 'git pull origin main'
-            sh 'git merge origin/staging'
-            sh 'git push origin main'
+            bat 'git checkout main'
+            bat 'git pull origin main'
+            bat 'git merge origin/staging'
+            bat 'git push origin main'
             
             echo "Successfully promoted staging branch to main"
           }
@@ -104,12 +104,12 @@ pipeline {
         script {
           withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
             // Checkout main branch and build production image
-            sh 'git checkout main'
-            sh 'git pull origin main'
-            sh "docker build --target production -t ${DOCKER_USERNAME}/${IMAGE_NAME}:production ."
+            bat 'git checkout main'
+            bat 'git pull origin main'
+            bat "docker build --target production -t %DOCKER_USERNAME%/%IMAGE_NAME%:production ."
             
             // Push to Docker Hub
-            sh "docker push ${DOCKER_USERNAME}/${IMAGE_NAME}:production"
+            bat "docker push %DOCKER_USERNAME%/%IMAGE_NAME%:production"
             
             echo "Production image built from main branch and pushed to Docker Hub"
           }
@@ -124,13 +124,13 @@ pipeline {
       steps {
         script {
           // Stop and remove existing production containers
-          sh "docker-compose -f docker-compose.production.yml down || true"
+          bat "docker-compose -f docker-compose.production.yml down || exit 0"
           
           // Start new production environment
-          sh "docker-compose -f docker-compose.production.yml up -d"
+          bat "docker-compose -f docker-compose.production.yml up -d"
           
           // Wait for production to be healthy
-          sh "node scripts/wait-for-healthy.js ${PRODUCTION_URL} 300"
+          bat "node scripts/wait-for-healthy.js %PRODUCTION_URL% 300"
           
           echo "Local production deployment completed and healthy"
         }
@@ -138,7 +138,7 @@ pipeline {
       post {
         failure {
           echo "Production deployment failed - checking logs"
-          sh "docker-compose -f docker-compose.production.yml logs"
+          bat "docker-compose -f docker-compose.production.yml logs"
         }
         success {
           echo "Production deployment successful! Pipeline completed successfully."
