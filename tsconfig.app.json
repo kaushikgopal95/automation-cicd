@@ -22,9 +22,10 @@
     "noFallthroughCasesInSwitch": false,
 
     "baseUrl": ".",
+    "types": ["cypress"],
     "paths": {
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "cypress"]
 }

@@ -1,15 +1,10 @@
 pipeline {
   agent any
   environment {
-    AWS_ACCOUNT_ID = 'your-aws-account-id'
-    AWS_REGION = 'us-east-1'
-    ECR_REGISTRY = '${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com'
+    DOCKERHUB_USERNAME = 'kaushikgopal95'
     IMAGE_NAME = 'plantbot'
-    ECS_CLUSTER = 'plantbot-cluster'
-    ECS_STAGING_SERVICE = 'plantbot-staging'
-    ECS_PRODUCTION_SERVICE = 'plantbot-production'
-    AWS_STAGING_URL = 'https://your-staging-domain.com' // Update with your staging domain
-    AWS_PRODUCTION_URL = 'https://your-production-domain.com' // Update with your production domain
+    STAGING_URL = 'http://localhost:3001'
+    PRODUCTION_URL = 'http://localhost:3002'
   }
   
   stages {
@@ -17,41 +12,43 @@ pipeline {
       steps {
         script {
           // Build staging image
-          sh "docker build --target staging -t ${ECR_REGISTRY}/${IMAGE_NAME}:staging ."
+          sh "docker build --target staging -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:staging ."
           
-          // Login to ECR
-          sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
+          // Login to Docker Hub
+          withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+            sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
+          }
           
-          // Push to ECR
-          sh "docker push ${ECR_REGISTRY}/${IMAGE_NAME}:staging"
+          // Push to Docker Hub
+          sh "docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:staging"
           
-          echo "Staging image built and pushed to ECR"
+          echo "Staging image built and pushed to Docker Hub"
         }
       }
     }
     
-    stage('Deploy to AWS Staging') {
+    stage('Deploy to Local Staging') {
       steps {
         script {
-          // Update ECS service with new image
-          sh "aws ecs update-service --cluster ${ECS_CLUSTER} --service ${ECS_STAGING_SERVICE} --force-new-deployment"
+          // Stop and remove existing staging containers
+          sh "docker-compose -f docker-compose.staging.yml down || true"
           
-          // Wait for service to be stable
-          sh "aws ecs wait services-stable --cluster ${ECS_CLUSTER} --services ${ECS_STAGING_SERVICE}"
+          // Start new staging environment
+          sh "docker-compose -f docker-compose.staging.yml up -d"
           
           // Wait for staging to be healthy
-          sh "node scripts/wait-for-healthy.js ${AWS_STAGING_URL} 300"
+          sh "node scripts/wait-for-healthy.js ${STAGING_URL} 300"
           
-          echo "AWS staging deployment completed and healthy"
+          echo "Local staging deployment completed and healthy"
         }
       }
     }
     
-    stage('Run Cypress Tests on AWS Staging') {
+    stage('Run Cypress Tests on Local Staging') {
       steps {
         script {
-          // Run Cypress tests against the live AWS staging URL
-          sh "CYPRESS_BASE_URL=${AWS_STAGING_URL} npx cypress run"
+          // Run Cypress tests against the live local staging URL
+          sh "CYPRESS_BASE_URL=${STAGING_URL} npx cypress run"
         }
       }
       post {
@@ -68,35 +65,32 @@ pipeline {
       steps {
         script {
           // Build production image
-          sh "docker build --target production -t ${ECR_REGISTRY}/${IMAGE_NAME}:production ."
+          sh "docker build --target production -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:production ."
           
-          // Login to ECR
-          sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
+          // Push to Docker Hub
+          sh "docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:production"
           
-          // Push to ECR
-          sh "docker push ${ECR_REGISTRY}/${IMAGE_NAME}:production"
-          
-          echo "Production image built and pushed to ECR"
+          echo "Production image built and pushed to Docker Hub"
         }
       }
     }
     
-    stage('Deploy to AWS Production') {
+    stage('Deploy to Local Production') {
       when {
         expression { currentBuild.result == 'SUCCESS' }
       }
       steps {
         script {
-          // Update ECS service with new image
-          sh "aws ecs update-service --cluster ${ECS_CLUSTER} --service ${ECS_PRODUCTION_SERVICE} --force-new-deployment"
+          // Stop and remove existing production containers
+          sh "docker-compose -f docker-compose.production.yml down || true"
           
-          // Wait for service to be stable
-          sh "aws ecs wait services-stable --cluster ${ECS_CLUSTER} --services ${ECS_PRODUCTION_SERVICE}"
+          // Start new production environment
+          sh "docker-compose -f docker-compose.production.yml up -d"
           
           // Wait for production to be healthy
-          sh "node scripts/wait-for-healthy.js ${AWS_PRODUCTION_URL} 300"
+          sh "node scripts/wait-for-healthy.js ${PRODUCTION_URL} 300"
           
-          echo "AWS production deployment completed and healthy"
+          echo "Local production deployment completed and healthy"
         }
       }
     }
