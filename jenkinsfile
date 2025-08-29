@@ -41,6 +41,9 @@ pipeline {
           // Clean up port 3001 if occupied before deployment
           bat "netstat -ano | findstr :3001 | findstr LISTENING && (for /f \"tokens=5\" %%a in ('netstat -ano ^| findstr :3001 ^| findstr LISTENING') do taskkill /f /pid %%a) || echo Port 3001 is free"
           
+          // Add this right before the docker-compose command
+          bat "dir docker-compose.staging.yml"
+          bat "echo Current directory: %CD%"    
           // Start/update staging environment (Docker Compose handles conflicts automatically)
           bat "docker-compose -f docker-compose.staging.yml up -d"
           
