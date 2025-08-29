@@ -80,9 +80,9 @@ pipeline {
         script {
           // Configure Git credentials
           withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
-            // Set Git configuration
-            bat 'git config --global user.email "jenkins@example.com"'
-            bat 'git config --global user.name "Jenkins Pipeline"'
+            // Set Git configuration using existing credentials
+            bat 'git config --global user.email "%GIT_USERNAME%@github.com"'
+            bat 'git config --global user.name "%GIT_USERNAME%"'
             
             // Checkout main branch and merge staging
             bat 'git checkout main'

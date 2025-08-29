@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   app:
-    image: ${DOCKER_USERNAME:-your-username}/plantbot:staging
+    image: ${DOCKER_USERNAME:-kaushikgopal95}/plantbot:staging
     container_name: plantbot-staging
     ports:
       - "3001:80"
