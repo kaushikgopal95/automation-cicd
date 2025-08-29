@@ -43,7 +43,7 @@ export const Hero = ({ onGetStarted }: HeroProps) => {
           {/* Main Heading */}
           <h1 className="text-5xl md:text-7xl font-bold text-gray-100 mb-6 leading-tight" data-testid="hero-title">
             Bring Nature
-            <span className="text-green-400 block">Into Your Home</span>
+            <span className="text-green-400 block">Into Your House</span>
           </h1>
 
           {/* Subheading */}

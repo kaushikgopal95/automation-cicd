@@ -2,10 +2,7 @@ version: "3.8"
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: dockerfile
-      target: staging
+    image: ${DOCKER_USERNAME:-your-username}/plantbot:staging
     container_name: plantbot-staging
     ports:
       - "3001:80"
