@@ -38,6 +38,9 @@ pipeline {
     stage('Deploy to Local Staging') {
       steps {
         script {
+          // Clean up port 3001 if occupied before deployment
+          bat "netstat -ano | findstr :3001 | findstr LISTENING && (for /f \"tokens=5\" %%a in ('netstat -ano ^| findstr :3001 ^| findstr LISTENING') do taskkill /f /pid %%a) || echo Port 3001 is free"
+          
           // Start/update staging environment (Docker Compose handles conflicts automatically)
           bat "docker-compose -f docker-compose.staging.yml up -d"
           
@@ -120,6 +123,9 @@ pipeline {
       }
       steps {
         script {
+          // Clean up port 3002 if occupied before deployment
+          bat "netstat -ano | findstr :3002 | findstr LISTENING && (for /f \"tokens=5\" %%a in ('netstat -ano ^| findstr :3002 ^| findstr LISTENING') do taskkill /f /pid %%a) || echo Port 3002 is free"
+          
           // Start/update production environment (Docker Compose handles conflicts automatically)
           bat "docker-compose -f docker-compose.production.yml up -d"
           
