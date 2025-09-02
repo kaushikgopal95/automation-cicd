@@ -14,16 +14,16 @@ pipeline {
   }
   
   stages {
-    stage('Deploy to Staging') {
-      steps {
-        script {
-          // Trigger Netlify deployment using the build hook
-          bat 'curl -X POST -d {} "https://api.netlify.com/build_hooks/68b18e4052945d72b87627f4"'
+    // stage('Deploy to Staging') {
+    //   steps {
+    //     script {
+    //       // Trigger Netlify deployment using the build hook
+    //       bat 'curl -X POST -d {} "https://api.netlify.com/build_hooks/68b18e4052945d72b87627f4"'
           
-          echo "Netlify staging deployment triggered"
-        }
-      }
-    }
+    //       echo "Netlify staging deployment triggered"
+    //     }
+    //   }
+    // }
     
     stage('Wait for Staging Deployment') {
       steps {
@@ -39,6 +39,9 @@ pipeline {
     stage('Run Cypress Tests on Staging') {
       steps {
         script {
+          // Install dependencies first
+          bat 'npm install'
+          
           // Run Cypress tests against the live staging URL
           bat "set CYPRESS_BASE_URL=%STAGING_URL% && npx cypress run"
         }
