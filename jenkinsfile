@@ -31,9 +31,13 @@ pipeline {
         script {
           // Wait for staging deployment to be ready
           bat "echo Waiting for staging deployment at %STAGING_URL%"
-          bat "node scripts/wait-for-healthy.js %STAGING_URL% 300"
+          bat "echo Testing health check script..."
+          
+          // Test the health check script
+          bat "node scripts/wait-for-healthy.js %STAGING_URL% 60"
           
           // Additional verification
+          bat "echo Additional verification:"
           bat "curl -I %STAGING_URL%"
           
           echo "Staging deployment completed and healthy"
