@@ -83,19 +83,19 @@ pipeline {
           if (currentBuild.result == 'SUCCESS' || currentBuild.currentResult == 'SUCCESS') {
             echo "Tests passed, proceeding with promotion to main branch"
             
-            // Configure Git credentials
+            // Use Jenkins credentials for Git operations
             withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
-              // Set Git configuration
-              bat 'git config --global user.email "%GIT_USERNAME%@github.com"'
-              bat 'git config --global user.name "%GIT_USERNAME%"'
-              
-              // Configure remote URL with credentials to avoid authentication hanging
+              // Set remote URL with embedded credentials (one-time setup)
               bat 'git remote set-url origin https://%GIT_USERNAME%:%GIT_PASSWORD%@github.com/kaushikgopal95/automation-cicd.git'
               
               // Direct merge approach
               bat 'git checkout main'
               bat 'git pull origin main'
               bat 'git merge origin/staging'
+              
+              // Test authentication first
+              bat 'echo "Testing authentication..."'
+              bat 'git ls-remote origin'
               
               // Push with credentials embedded in URL
               bat 'echo "Starting git push to origin main..."'
