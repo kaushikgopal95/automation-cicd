@@ -1,7 +1,7 @@
 # Automation CICD Project
 
 ## Overview
-This project demonstrates a full CI/CD pipeline for a web application using Docker, Jenkins, Playwright, and AWS. It is designed to help beginners and QA engineers understand how modern automation and deployment workflows work.
+This project demonstrates a full CI/CD pipeline for a web application using Docker, Jenkins, Cypress, and AWS. It is designed to help beginners and QA engineers understand how modern automation and deployment workflows work.
 
 ---
 
@@ -11,12 +11,12 @@ This project demonstrates a full CI/CD pipeline for a web application using Dock
   - `src/` — All your website source code (React, CSS, components, etc.)
   - `public/` — Static assets for the website (favicon, robots.txt, etc.)
   - `index.html`, `App.tsx`, etc. — Main entry points for the web app
-- **Playwright Tests:**
-  - `tests/api/UI/` — Playwright end-to-end test files (e.g., `sample.spec.ts`)
+- **Cypress Tests:**
+  - `cypress/` — Contains all Cypress end-to-end and component tests
 - **CI/CD & Automation:**
   - `Dockerfile` — Multi-stage build for dev, staging, and production
   - `docker-compose.dev.yml` — For local development
-  - `docker-compose.qa.yml` — For QA/staging automation and Playwright tests
+  - `docker-compose.qa.yml` — For QA/staging automation and Cypress tests
   - `docker-compose.prod.yml` — For production deployment
   - `Dockerfile.jenkins` — Custom Jenkins image with Docker CLI/Compose
   - `docker-compose.jenkins.yml` — Runs Jenkins as a container

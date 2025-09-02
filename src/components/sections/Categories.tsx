@@ -1,50 +1,44 @@
 
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 
 export const Categories = () => {
-  const { data: categories, isLoading, error } = useQuery({
+  const navigate = useNavigate();
+  
+  const handleCategoryClick = (categoryId: string) => {
+    navigate(`/categories/${categoryId}`);
+  };
+  const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      console.log('Fetching categories...');
       const { data, error } = await supabase
         .from('categories')
         .select('*')
         .order('name');
       
-      if (error) {
-        console.error('Error fetching categories:', error);
-        throw error;
-      }
-      
-      console.log('Fetched categories:', data);
+      if (error) throw error;
       return data || [];
     },
   });
 
-  if (error) {
-    console.error('Error in Categories:', error);
-    return (
-      <section id="categories" className="py-20 bg-gray-900">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <h2 className="text-2xl text-red-500">Error loading categories</h2>
-            <p className="text-gray-400">Please try again later</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   if (isLoading) {
     return (
-      <section id="categories" className="py-20 bg-gray-900">
+      <section id="categories" className="py-20 bg-gray-800">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-40 bg-gray-800 rounded-lg animate-pulse"></div>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">Plant Categories</h2>
+            <p className="text-xl text-gray-300">Explore our diverse collection of plants</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-48 bg-gray-700 rounded-lg mb-4"></div>
+                <div className="h-6 bg-gray-700 rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-gray-700 rounded w-1/2"></div>
+              </div>
             ))}
           </div>
         </div>
@@ -70,6 +64,7 @@ export const Categories = () => {
               key={category.id} 
               className="bg-gray-800 border-gray-700 hover:border-green-500 transition-all duration-300 group cursor-pointer"
               data-testid={`category-card-${category.slug}`}
+              onClick={() => handleCategoryClick(category.id)}
             >
               <CardContent className="p-6 text-center">
                 <div className="w-16 h-16 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-600/30 transition-colors">

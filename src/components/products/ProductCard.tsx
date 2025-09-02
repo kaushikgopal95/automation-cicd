@@ -1,22 +1,41 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { ShoppingCart, Heart, Star, Info } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { ShoppingCart, Heart, Star, ChevronRight, Info } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { getProductImage } from "@/utils/product-utils";
 
-interface Product {
+export interface Product {
   id: string;
   name: string;
   description: string;
   price: number;
   image_url?: string;
-  difficulty_level?: string;
   stock_quantity: number;
   sku: string;
+  rating?: number;
+  reviews?: number;
+  category?: string;
+  difficulty_level?: string;
+  light_requirements?: string;
+  water_needs?: string;
+  humidity?: string;
+  pet_friendly?: boolean;
+  tags?: string[];
+  details?: {
+    height: string;
+    width: string;
+    origin: string;
+    scientific_name: string;
+    benefits: string[];
+  };
+  images?: string[];
   categories?: {
     name: string;
     slug: string;
@@ -32,14 +51,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const [imageError, setImageError] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
-  const { data: user } = useQuery({
-    queryKey: ['user'],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session?.user || null;
-    },
-  });
+  const navigate = useNavigate();
 
   const handleAddToCart = async () => {
     if (!user) {
@@ -91,110 +105,40 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     }
   };
 
-  const getProductImage = () => {
-    // If there's an image URL and no error, use it
-    if (product.image_url && !imageError) {
-      return product.image_url;
-    }
-
-    // Fallback to category-specific images
-    const plantImages = {
-      monstera: 'https://images.unsplash.com/photo-1509315073520-7fadf8b73739?w=800&h=600&fit=crop&crop=center',
-      snake: 'https://images.unsplash.com/photo-1595239244574-806db09dcd26?w=800&h=600&fit=crop&crop=center',
-      fiddle: 'https://images.unsplash.com/photo-1558603668-6570496b66f8?w=800&h=600&fit=crop&crop=center',
-      pothos: 'https://images.unsplash.com/photo-1600411832666-9c9a0acb50cc?w=800&h=600&fit=crop&crop=center',
-      succulent: 'https://images.unsplash.com/photo-1518977676601-b53fccabaac7?w=800&h=600&fit=crop&crop=center',
-      default: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&h=600&fit=crop&crop=center'
-    };
-
-    const craftImages = {
-      macrame: 'https://images.unsplash.com/photo-1493514789931-586cb221d7a7?w=800&h=600&fit=crop&crop=center',
-      ceramic: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop&crop=center',
-      planter: 'https://images.unsplash.com/photo-1515150144906-dae0426e5c9e?w=800&h=600&fit=crop&crop=center',
-      default: 'https://images.unsplash.com/photo-1605000797499-95a51c5269ae?w=800&h=600&fit=crop&crop=center'
-    };
-
-    const plantCareImages = {
-      fertilizer: 'https://images.unsplash.com/photo-1597846255279-4b7a6d7c2c8c?w=800&h=600&fit=crop&crop=center',
-      tools: 'https://images.unsplash.com/photo-1584308666744-5d72bbefd1f5?w=800&h=600&fit=crop&crop=center',
-      default: 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=800&h=600&fit=crop&crop=center'
-    };
-
-    // Check for specific product names in the product name
-    const productName = product.name.toLowerCase();
-    
-    if (product.categories?.slug === 'indoor-plants') {
-      if (productName.includes('monstera')) return plantImages.monstera;
-      if (productName.includes('snake')) return plantImages.snake;
-      if (productName.includes('fiddle')) return plantImages.fiddle;
-      if (productName.includes('pothos')) return plantImages.pothos;
-      if (productName.includes('succulent')) return plantImages.succulent;
-      return plantImages.default;
-    }
-    
-    if (product.categories?.slug === 'handmade-crafts') {
-      if (productName.includes('macrame')) return craftImages.macrame;
-      if (productName.includes('ceramic')) return craftImages.ceramic;
-      if (productName.includes('planter')) return craftImages.planter;
-      return craftImages.default;
-    }
-    
-    if (product.categories?.slug === 'plant-care') {
-      if (productName.includes('fertilizer')) return plantCareImages.fertilizer;
-      if (productName.includes('tool') || productName.includes('set')) return plantCareImages.tools;
-      return plantCareImages.default;
-    }
-
-    // Default fallback
-    return 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=800&h=600&fit=crop&crop=center';
+  const handleViewDetails = () => {
+    navigate(`/products/${product.id}`);
   };
 
   return (
-    <Card className="bg-gray-900 border-gray-700 hover:border-green-500 transition-all duration-300 group overflow-hidden" data-testid={`product-card-${product.sku}`}>
-      <div className="relative overflow-hidden">
-        <img
-          src={getProductImage()}
-          alt={product.name}
-          onError={() => setImageError(true)}
-          className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-          data-testid="product-image"
-        />
-        
-        {/* Overlay Actions */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center space-x-4">
-          <Button
-            size="sm"
-            variant="secondary"
-            className="bg-gray-800/80 backdrop-blur-sm hover:bg-gray-700/80 text-white border-gray-600"
-            data-testid="quick-view-btn"
-          >
-            <Info className="h-4 w-4" />
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            className="bg-gray-800/80 backdrop-blur-sm hover:bg-gray-700/80 text-white border-gray-600"
-            data-testid="wishlist-btn"
-          >
-            <Heart className="h-4 w-4" />
-          </Button>
+    <Card 
+      className="group overflow-hidden bg-gray-900 border border-gray-800 hover:border-green-500/50 transition-all duration-300 h-full flex flex-col hover:shadow-lg hover:shadow-green-500/10"
+    >
+      <div className="relative aspect-square overflow-hidden">
+        <div 
+          className="w-full h-full cursor-pointer"
+          onClick={handleViewDetails}
+        >
+          <img
+            src={getProductImage(product.name)}
+            alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            onError={() => setImageError(true)}
+          />
         </div>
-
-        {/* Stock Badge */}
-        {product.stock_quantity <= 5 && product.stock_quantity > 0 && (
-          <Badge className="absolute top-2 right-2 bg-yellow-600 text-white" data-testid="low-stock-badge">
-            Low Stock
-          </Badge>
-        )}
         
-        {product.stock_quantity === 0 && (
-          <Badge className="absolute top-2 right-2 bg-red-600 text-white" data-testid="out-of-stock-badge">
-            Out of Stock
+        <div className="absolute top-2 left-2 flex flex-col space-y-2">
+          <Badge className={`${getDifficultyColor(product.difficulty_level)}`}>
+            {product.difficulty_level || 'Easy'}
           </Badge>
-        )}
+          {product.stock_quantity === 0 && (
+            <Badge className="bg-red-600 text-white" data-testid="out-of-stock-badge">
+              Out of Stock
+            </Badge>
+          )}
+        </div>
       </div>
 
-      <CardContent className="p-6">
+      <CardContent className="p-4 flex-1 flex flex-col">
         <div className="flex items-start justify-between mb-2">
           <div>
             <h3 className="text-lg font-semibold text-gray-100 group-hover:text-green-400 transition-colors" data-testid="product-name">
@@ -206,12 +150,23 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               </Badge>
             )}
           </div>
-          {product.difficulty_level && (
-            <Badge className={`text-xs ${getDifficultyColor(product.difficulty_level)}`} data-testid="difficulty-badge">
-              {product.difficulty_level}
-            </Badge>
+          {product.rating !== undefined && (
+            <div className="flex items-center bg-gray-800/80 rounded-full px-2 py-1">
+              <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 mr-1" />
+              <span className="text-xs font-medium text-gray-200">
+                {product.rating.toFixed(1)}
+              </span>
+            </div>
           )}
         </div>
+
+        {product.difficulty_level && (
+          <div className="mt-2">
+            <Badge className={`text-xs ${getDifficultyColor(product.difficulty_level)}`} data-testid="difficulty-badge">
+              {product.difficulty_level} Care Level
+            </Badge>
+          </div>
+        )}
 
         <p className="text-gray-400 text-sm mb-4 line-clamp-2" data-testid="product-description">
           {product.description}
@@ -225,7 +180,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           <span className="text-gray-400 text-sm ml-2">(4.8)</span>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-auto pt-4">
           <div className="flex flex-col">
             <span className="text-2xl font-bold text-green-400" data-testid="product-price">
               ${product.price}
@@ -234,17 +189,26 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </div>
 
           <Button
-            onClick={handleAddToCart}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAddToCart();
+            }}
             disabled={isLoading || product.stock_quantity === 0}
-            className="bg-green-600 hover:bg-green-700 text-white shadow-md"
+            className="bg-green-600 hover:bg-green-700 text-white shadow-md transition-colors"
             data-testid="add-to-cart-btn"
           >
             {isLoading ? (
-              "Adding..."
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Adding...
+              </span>
             ) : (
               <>
                 <ShoppingCart className="h-4 w-4 mr-2" />
-                Add to Cart
+                {product.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
               </>
             )}
           </Button>

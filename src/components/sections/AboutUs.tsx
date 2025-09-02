@@ -29,7 +29,7 @@ export const AboutUs = () => {
     <section id="about" className="py-20 bg-gray-800 text-white">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4">About PlantCraft</h2>
+          <h2 className="text-4xl font-bold mb-4">About PlantBot</h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             Bringing nature's beauty into your home, one plant at a time.
           </p>
@@ -38,8 +38,8 @@ export const AboutUs = () => {
         <div className="max-w-4xl mx-auto mb-16">
           <div className="bg-gray-900 rounded-lg p-8 mb-8">
             <h3 className="text-2xl font-bold mb-4">Our Story</h3>
-            <p className="text-gray-300 mb-6">
-              Founded in 2020, PlantCraft started as a small urban nursery with a passion for making indoor gardening accessible to everyone. 
+            <p className="text-gray-600 leading-relaxed">
+              Founded in 2020, PlantBot started as a small urban nursery with a passion for making indoor gardening accessible to everyone.
               What began as a local plant shop has blossomed into an online destination for plant lovers across the country.
             </p>
             <p className="text-gray-300">

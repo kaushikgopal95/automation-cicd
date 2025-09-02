@@ -1,19 +1,25 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Leaf, Heart, Star } from "lucide-react";
+import { Leaf, Star, Heart, ArrowRight } from "lucide-react";
+import { useFeaturedProducts } from "@/hooks/use-product-search";
+import { useAuth } from "@/contexts/AuthContext";
 
-export const Hero = () => {
+interface HeroProps {
+  onGetStarted?: () => void;
+}
+
+export const Hero = ({ onGetStarted }: HeroProps) => {
+  const { user, isLoading } = useAuth();
+  
+  // Fetch featured products count for dynamic stats
+  const { data: featuredProducts = [] } = useFeaturedProducts(50);
+  const featuredProductsCount = featuredProducts.length;
+
   const handleShopNow = () => {
     const featuredSection = document.getElementById('featured-products');
     if (featuredSection) {
       featuredSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  const handleLearnMore = () => {
-    const categoriesSection = document.getElementById('categories');
-    if (categoriesSection) {
-      categoriesSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -31,13 +37,13 @@ export const Hero = () => {
           {/* Badge */}
           <div className="inline-flex items-center space-x-2 bg-green-600/20 text-green-400 px-4 py-2 rounded-full text-sm font-medium mb-8 border border-green-600/30">
             <Leaf className="h-4 w-4" />
-            <span>Premium Quality Plants & Crafts</span>
+            <span>Premium Quality Plants & Flower</span>
           </div>
 
           {/* Main Heading */}
           <h1 className="text-5xl md:text-7xl font-bold text-gray-100 mb-6 leading-tight" data-testid="hero-title">
             Bring Nature
-            <span className="text-green-400 block">Into Your Home</span>
+            <span className="text-green-400 block">Into Your House</span>
           </h1>
 
           {/* Subheading */}
@@ -63,32 +69,24 @@ export const Hero = () => {
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <Button 
               size="lg" 
-              onClick={handleShopNow}
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-semibold group shadow-lg"
-              data-testid="shop-now-btn"
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg font-semibold group"
+              onClick={isLoading ? undefined : (onGetStarted || handleShopNow)}
+              data-testid="get-started-btn"
+              disabled={isLoading}
             >
-              Shop Now
+              {isLoading ? 'Loading...' : user ? 'Shop Now' : 'Get Started'}
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
             
-            <Button 
-              variant="outline" 
-              size="lg"
-              onClick={handleLearnMore}
-              className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-green-400 px-8 py-4 text-lg font-semibold shadow-lg"
-              data-testid="learn-more-btn"
-            >
-              Learn More
-            </Button>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 pt-16 border-t border-gray-700">
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-400 mb-2" data-testid="stat-products">50+</div>
+              <div className="text-3xl font-bold text-green-400 mb-2" data-testid="stat-products">{featuredProductsCount}+</div>
               <div className="text-gray-400">Premium Products</div>
             </div>
             <div className="text-center">

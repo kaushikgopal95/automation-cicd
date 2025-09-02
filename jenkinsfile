@@ -1,33 +1,129 @@
 pipeline {
   agent any
+  
+  environment {
+    STAGING_URL = 'https://stag-plantbot.netlify.app'
+    PRODUCTION_URL = 'https://prod-plantbot.netlify.app/'
+    BUILD_TIMESTAMP = "${new Date().format('yyyyMMdd-HHmmss')}"
+  }
+  
+  options {
+    timeout(time: 30, unit: 'MINUTES')
+    retry(1)
+    timestamps()
+  }
+  
   stages {
-    stage('Build Staging Image (Optional)') { // Build the QA (staging) image locally for fast feedback
+    // stage('Deploy to Staging') {
+    //   steps {
+    //     script {
+    //       // Trigger Netlify deployment using the build hook
+    //       bat 'curl -X POST -d {} "https://api.netlify.com/build_hooks/68b18e4052945d72b87627f4"'
+          
+    //       echo "Netlify staging deployment triggered"
+    //     }
+    //   }
+    // }
+    
+    stage('Wait for Staging Deployment') {
       steps {
-        sh 'docker-compose -f docker-compose.qa.yml build'
-      }
-    }
-    stage('Deploy to AWS Staging') { // Deploy the app to AWS staging server
-      steps {
-        sh 'ssh ec2-user@your-aws-staging-server "cd /path/to/app && git pull && docker-compose -f docker-compose.qa.yml up -d --build"'
-      }
-    }
-    stage('Run Cypress Tests on AWS Staging') { // Run Cypress tests against the live AWS staging URL
-      steps {
-        // Replace the URL with your actual AWS staging URL in the test file
-        sh 'npx cypress run'
-      }
-      post {
-        always {
-          archiveArtifacts artifacts: 'cypress/videos/**/*,cypress/screenshots/**/*'
+        script {
+          // Wait for staging deployment to be ready
+          bat "echo Waiting for staging deployment at %STAGING_URL%"
+          bat "node scripts/wait-for-healthy.js %STAGING_URL% 300"
+          
+          // Additional verification
+          bat "curl -I %STAGING_URL%"
+          
+          echo "Staging deployment completed and healthy"
         }
       }
     }
-    stage('Deploy to AWS Production') { // Deploy the app to AWS production server if tests pass
-      when {
-        expression { currentBuild.result == 'SUCCESS' }
-      }
+    
+    stage('Run Cypress Tests on Staging') {
       steps {
-        sh 'ssh ec2-user@your-aws-production-server "cd /path/to/app && git pull && docker-compose -f docker-compose.prod.yml up -d --build"'
+        script {
+          // Install dependencies first
+          bat 'npm install'
+          
+          // Run Cypress tests against the live staging URL
+          bat "set CYPRESS_BASE_URL=%STAGING_URL% && npx cypress run"
+          
+          // Debug: Check build status
+          echo "Current build result: ${currentBuild.result}"
+          echo "Build status: ${currentBuild.currentResult}"
+        }
+      }
+      post {
+        always {
+          // Archive Cypress artifacts if they exist
+          script {
+            try {
+              archiveArtifacts artifacts: 'cypress/videos/**/*,cypress/screenshots/**/*', allowEmptyArchive: true
+            } catch (Exception e) {
+              echo "No Cypress artifacts found to archive: ${e.getMessage()}"
+            }
+          }
+        }
+      }
+    }
+    
+    stage('Promote to Main Branch') {
+      steps {
+        script {
+          echo "Current build result: ${currentBuild.result}"
+          echo "Current build status: ${currentBuild.currentResult}"
+          
+          // Check if tests passed by looking at the previous stage result
+          if (currentBuild.result == 'SUCCESS' || currentBuild.currentResult == 'SUCCESS') {
+            echo "Tests passed, proceeding with promotion to main branch"
+            
+            // Configure Git credentials
+            withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
+              // Set Git configuration
+              bat 'git config --global user.email "%GIT_USERNAME%@github.com"'
+              bat 'git config --global user.name "%GIT_USERNAME%"'
+              
+              // Checkout main branch and merge staging
+              bat 'git checkout main'
+              bat 'git pull origin main'
+              bat 'git merge origin/staging'
+              bat 'git push origin main'
+              
+              echo "Successfully promoted staging branch to main"
+            }
+          } else {
+            echo "Tests failed or build not successful, skipping promotion"
+            currentBuild.result = 'FAILURE'
+          }
+        }
+      }
+    }
+    
+    stage('Wait for Production Deployment') {
+      steps {
+        script {
+          echo "Current build result: ${currentBuild.result}"
+          
+          if (currentBuild.result == 'SUCCESS' || currentBuild.currentResult == 'SUCCESS') {
+            echo "Proceeding with production deployment"
+            
+            // Trigger Netlify production deployment
+            // bat 'curl -X POST -d {} "https://api.netlify.com/build_hooks/68b68850a4e373ee7b86e5fb"'
+            
+            // Wait for production deployment to be ready
+            bat "node scripts/wait-for-healthy.js %PRODUCTION_URL% 300"
+            
+            echo "Production deployment completed and healthy"
+          } else {
+            echo "Skipping production deployment due to failed tests"
+          }
+        }
+      }
+      post {
+        success {
+          echo "Production deployment successful! Pipeline completed successfully."
+        }
       }
     }
   }

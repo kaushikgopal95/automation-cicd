@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  app:
+    image: ${DOCKER_USERNAME:-kaushikgopal95}/plantbot:production
+    ports:
+      - "3002:80"
+    environment:
+      - NODE_ENV=production
+      - PORT=80
+    restart: unless-stopped
+    networks:
+      - production-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  production-network:
+    driver: bridge
