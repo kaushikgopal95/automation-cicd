@@ -17,21 +17,10 @@ pipeline {
     stage('Deploy to Staging') {
       steps {
         script {
-          // Configure Git credentials
-          withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
-            // Set Git configuration
-            bat 'git config --global user.email "%GIT_USERNAME%@github.com"'
-            bat 'git config --global user.name "%GIT_USERNAME%"'
-            
-            // Push to staging branch (this triggers Render/Netlify deployment)
-            bat 'git checkout staging'
-            bat 'git pull origin staging'
-            bat 'git push origin staging'
-
-            bat 'curl -X POST -d {} "https://api.netlify.com/build_hooks/68b18e4052945d72b87627f4"'
-            
-            echo "Code pushed to staging branch - deployment triggered on Render/Netlify"
-          }
+          // Trigger Netlify deployment using the build hook
+          bat 'curl -X POST -d {} "https://api.netlify.com/build_hooks/68b18e4052945d72b87627f4"'
+          
+          echo "Netlify staging deployment triggered"
         }
       }
     }
