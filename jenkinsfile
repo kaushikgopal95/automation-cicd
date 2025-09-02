@@ -89,30 +89,25 @@ pipeline {
               bat 'git config --global user.email "%GIT_USERNAME%@github.com"'
               bat 'git config --global user.name "%GIT_USERNAME%"'
               
-              // Direct merge approach with timeout and logging
+              // Configure remote URL with credentials to avoid authentication hanging
+              bat 'git remote set-url origin https://%GIT_USERNAME%:%GIT_PASSWORD%@github.com/kaushikgopal95/automation-cicd.git'
+              
+              // Direct merge approach
               bat 'git checkout main'
               bat 'git pull origin main'
               bat 'git merge origin/staging'
               
-              // Push with timeout and detailed logging
+              // Push with credentials embedded in URL
               bat 'echo "Starting git push to origin main..."'
               bat 'echo "Current time: %DATE% %TIME%"'
-              bat 'echo "Git remote URL:"'
-              bat 'git remote -v'
-              bat 'echo "Current branch:"'
-              bat 'git branch'
-              bat 'echo "Git status before push:"'
-              bat 'git status'
-              
-              // Try push with timeout
-              bat 'timeout 120 git push -v origin main || echo "Push failed or timed out"'
-              bat 'echo "Push command completed at: %DATE% %TIME%"'
+              bat 'git push origin main'
+              bat 'echo "Push completed at: %DATE% %TIME%"'
               bat 'echo "Push exit code: %ERRORLEVEL%"'
               
               // Check final status
               bat 'git status'
               bat 'git log --oneline -3'
-              bat 'echo "Main branch update attempt completed"'
+              bat 'echo "Main branch updated on GitHub successfully"'
               
               echo "Successfully promoted staging branch to main"
             }
