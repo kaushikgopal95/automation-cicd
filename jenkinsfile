@@ -48,7 +48,14 @@ pipeline {
       }
       post {
         always {
-          archiveArtifacts artifacts: 'cypress/videos/**/*,cypress/screenshots/**/*'
+          // Archive Cypress artifacts if they exist
+          script {
+            try {
+              archiveArtifacts artifacts: 'cypress/videos/**/*,cypress/screenshots/**/*', allowEmptyArchive: true
+            } catch (Exception e) {
+              echo "No Cypress artifacts found to archive: ${e.getMessage()}"
+            }
+          }
         }
       }
     }
