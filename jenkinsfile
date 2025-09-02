@@ -89,12 +89,30 @@ pipeline {
               bat 'git config --global user.email "%GIT_USERNAME%@github.com"'
               bat 'git config --global user.name "%GIT_USERNAME%"'
               
-              // Checkout main branch and merge staging
+              // Direct merge approach with timeout and logging
               bat 'git checkout main'
               bat 'git pull origin main'
-              bat 'git merge origin/staging || echo "Merge completed or no changes to merge"'
-              bat 'git push origin main || echo "Push failed, checking status"'
+              bat 'git merge origin/staging'
+              
+              // Push with timeout and detailed logging
+              bat 'echo "Starting git push to origin main..."'
+              bat 'echo "Current time: %DATE% %TIME%"'
+              bat 'echo "Git remote URL:"'
+              bat 'git remote -v'
+              bat 'echo "Current branch:"'
+              bat 'git branch'
+              bat 'echo "Git status before push:"'
               bat 'git status'
+              
+              // Try push with timeout
+              bat 'timeout 120 git push -v origin main || echo "Push failed or timed out"'
+              bat 'echo "Push command completed at: %DATE% %TIME%"'
+              bat 'echo "Push exit code: %ERRORLEVEL%"'
+              
+              // Check final status
+              bat 'git status'
+              bat 'git log --oneline -3'
+              bat 'echo "Main branch update attempt completed"'
               
               echo "Successfully promoted staging branch to main"
             }
@@ -114,8 +132,8 @@ pipeline {
           if (currentBuild.result == 'SUCCESS' || currentBuild.currentResult == 'SUCCESS') {
             echo "Proceeding with production deployment"
             
-            // Trigger Netlify production deployment
-            // bat 'curl -X POST -d {} "https://api.netlify.com/build_hooks/68b68850a4e373ee7b86e5fb"'
+            // Production deployment will be triggered automatically by Netlify when main branch is updated
+            bat 'echo "Main branch updated - Netlify will auto-deploy to production"'
             
             // Wait for production deployment to be ready
             bat "node scripts/wait-for-healthy.js %PRODUCTION_URL% 300"
@@ -152,14 +170,9 @@ pipeline {
         <p><strong>Production URL:</strong> <a href="${PRODUCTION_URL}">${PRODUCTION_URL}</a></p>
         <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
         
-        <h3>What happened:</h3>
-        <ul>
-          <li>✅ Code deployed to staging</li>
-          <li>✅ Cypress tests passed</li>
-          <li>✅ Pull Request created for production deployment</li>
-        </ul>
         
-        <p><strong>Next Steps:</strong> Please review and merge the Pull Request to deploy to production.</p>
+        
+        <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
         """,
         to: "${RECIPIENTS}",
         mimeType: 'text/html'
