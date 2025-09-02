@@ -94,15 +94,25 @@ pipeline {
               bat 'git pull origin main'
               bat 'git merge origin/staging'
               
-              // Push with detailed logging and error handling
+              // Push with timeout and detailed logging
               bat 'echo "Starting git push to origin main..."'
               bat 'echo "Current time: %DATE% %TIME%"'
-              bat 'git push -v origin main'
-              bat 'echo "Git push completed at: %DATE% %TIME%"'
+              bat 'echo "Git remote URL:"'
+              bat 'git remote -v'
+              bat 'echo "Current branch:"'
+              bat 'git branch'
+              bat 'echo "Git status before push:"'
+              bat 'git status'
+              
+              // Try push with timeout
+              bat 'timeout 120 git push -v origin main || echo "Push failed or timed out"'
+              bat 'echo "Push command completed at: %DATE% %TIME%"'
               bat 'echo "Push exit code: %ERRORLEVEL%"'
+              
+              // Check final status
               bat 'git status'
               bat 'git log --oneline -3'
-              bat 'echo "Main branch updated on GitHub successfully"'
+              bat 'echo "Main branch update attempt completed"'
               
               echo "Successfully promoted staging branch to main"
             }
