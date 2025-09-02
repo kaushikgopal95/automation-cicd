@@ -79,35 +79,33 @@ pipeline {
           echo "Current build result: ${currentBuild.result}"
           echo "Current build status: ${currentBuild.currentResult}"
           
-          // Check if tests passed by looking at the previous stage result
+          // Only promote if tests passed
           if (currentBuild.result == 'SUCCESS' || currentBuild.currentResult == 'SUCCESS') {
             echo "Tests passed, proceeding with promotion to main branch"
-            
-            // Use Jenkins credentials for Git operations
+
+            // Use Jenkins credentials (username = anything, password = PAT)
             withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_TOKEN')]) {
-            bat 'git remote set-url origin https://x-access-token:%GIT_TOKEN%@github.com/kaushikgopal95/automation-cicd.git'
-              
-              // Direct merge approach
-              bat 'git checkout main'
-              bat 'git pull origin main'
-              bat 'git merge origin/staging'
-              
-              // Test authentication first
-              bat 'echo "Testing authentication..."'
+
+              // Configure remote with PAT
+              bat """
+                git remote set-url origin https://x-access-token:${GIT_TOKEN}@github.com/kaushikgopal95/automation-cicd.git
+                git config user.name "${GIT_USERNAME}"
+                git config user.email "kaushikgopal95@users.noreply.github.com"
+              """
+
+              // Merge staging → main
+              bat """
+                git checkout main
+                git pull origin main
+                git merge origin/staging
+              """
+
+              // Verify auth
               bat 'git ls-remote origin'
-              
-              // Push with credentials embedded in URL
-              bat 'echo "Starting git push to origin main..."'
-              bat 'echo "Current time: %DATE% %TIME%"'
+
+              // Push changes
               bat 'git push origin main'
-              bat 'echo "Push completed at: %DATE% %TIME%"'
-              bat 'echo "Push exit code: %ERRORLEVEL%"'
-              
-              // Check final status
-              bat 'git status'
-              bat 'git log --oneline -3'
-              bat 'echo "Main branch updated on GitHub successfully"'
-              
+
               echo "Successfully promoted staging branch to main"
             }
           } else {
