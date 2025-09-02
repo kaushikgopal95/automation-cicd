@@ -93,7 +93,8 @@ pipeline {
               bat 'git checkout main'
               bat 'git pull origin main'
               bat 'git merge origin/staging || echo "Merge completed or no changes to merge"'
-              bat 'git push origin main || echo "Push failed, checking status"'
+             
+              bat 'git push -v --progress origin main' || echo "Push failed, checking status"'
               bat 'git status'
               
               echo "Successfully promoted staging branch to main"
