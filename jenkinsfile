@@ -94,10 +94,15 @@ pipeline {
               bat 'git pull origin main'
               bat 'git merge origin/staging'
               
-              // Skip push if it keeps hanging - merge is already done locally
-              bat 'echo "Merge completed locally - skipping push to avoid hanging"'
+              // Push with detailed logging and error handling
+              bat 'echo "Starting git push to origin main..."'
+              bat 'echo "Current time: %DATE% %TIME%"'
+              bat 'git push -v origin main'
+              bat 'echo "Git push completed at: %DATE% %TIME%"'
+              bat 'echo "Push exit code: %ERRORLEVEL%"'
               bat 'git status'
-              bat 'echo "Local merge successful - code is ready for production"'
+              bat 'git log --oneline -3'
+              bat 'echo "Main branch updated on GitHub successfully"'
               
               echo "Successfully promoted staging branch to main"
             }
@@ -117,8 +122,8 @@ pipeline {
           if (currentBuild.result == 'SUCCESS' || currentBuild.currentResult == 'SUCCESS') {
             echo "Proceeding with production deployment"
             
-            // Trigger Netlify production deployment
-            // bat 'curl -X POST -d {} "https://api.netlify.com/build_hooks/68b68850a4e373ee7b86e5fb"'
+            // Production deployment will be triggered automatically by Netlify when main branch is updated
+            bat 'echo "Main branch updated - Netlify will auto-deploy to production"'
             
             // Wait for production deployment to be ready
             bat "node scripts/wait-for-healthy.js %PRODUCTION_URL% 300"
@@ -155,19 +160,7 @@ pipeline {
         <p><strong>Production URL:</strong> <a href="${PRODUCTION_URL}">${PRODUCTION_URL}</a></p>
         <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
         
-        <h3>What happened:</h3>
-        <ul>
-          <li>✅ Code deployed to staging</li>
-          <li>✅ Cypress tests passed</li>
-          <li>📋 Pull Request created for team review</li>
-        </ul>
         
-        <h3>Next Steps:</h3>
-        <ol>
-          <li>Review the Pull Request on GitHub</li>
-          <li>Check the staging deployment</li>
-          <li>Merge the PR to deploy to production</li>
-        </ol>
         
         <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
         """,
