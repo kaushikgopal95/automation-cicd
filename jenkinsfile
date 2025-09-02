@@ -89,15 +89,17 @@ pipeline {
               bat 'git config --global user.email "%GIT_USERNAME%@github.com"'
               bat 'git config --global user.name "%GIT_USERNAME%"'
               
-              // Checkout main branch and merge staging
-              bat 'git checkout main'
-              bat 'git pull origin main'
-              bat 'git merge origin/staging || echo "Merge completed or no changes to merge"'
-             
-              bat 'git push -v --progress origin main || echo "Push failed, checking status"'
-              bat 'git status'
+              // Create PR for team review using PowerShell
+              bat 'powershell -Command "git checkout main"'
+              bat 'powershell -Command "git pull origin main"'
               
-              echo "Successfully promoted staging branch to main"
+              // Check if there are changes to merge
+              bat 'powershell -Command "git diff --quiet origin/staging; if ($LASTEXITCODE -ne 0) { Write-Host \'Changes detected between staging and main\' } else { Write-Host \'No changes to merge\' }"'
+              
+              // Create PR using GitHub API (more reliable than CLI)
+              bat 'powershell -Command "$headers = @{\'Authorization\' = \'token %GIT_PASSWORD%\'; \'Accept\' = \'application/vnd.github.v3+json\'}; $body = @{title=\'Deploy to Production - %BUILD_TIMESTAMP%\'; head=\'staging\'; base=\'main\'; body=\'Automated deployment from staging. Tests passed successfully. Please review and merge to deploy to production.\'} | ConvertTo-Json; try { $response = Invoke-RestMethod -Uri \'https://api.github.com/repos/kaushikgopal95/automation-cicd/pulls\' -Method Post -Headers $headers -Body $body; Write-Host \'PR Created Successfully:\' $response.html_url } catch { Write-Error \'Failed to create PR:\' $_.Exception.Message; exit 1 }"'
+              
+              echo "Pull Request created successfully for team review"
             }
           } else {
             echo "Tests failed or build not successful, skipping promotion"
@@ -157,10 +159,17 @@ pipeline {
         <ul>
           <li>✅ Code deployed to staging</li>
           <li>✅ Cypress tests passed</li>
-          <li>✅ Pull Request created for production deployment</li>
+          <li>📋 Pull Request created for team review</li>
         </ul>
         
-        <p><strong>Next Steps:</strong> Please review and merge the Pull Request to deploy to production.</p>
+        <h3>Next Steps:</h3>
+        <ol>
+          <li>Review the Pull Request on GitHub</li>
+          <li>Check the staging deployment</li>
+          <li>Merge the PR to deploy to production</li>
+        </ol>
+        
+        <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
         """,
         to: "${RECIPIENTS}",
         mimeType: 'text/html'
