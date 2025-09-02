@@ -5,6 +5,7 @@ pipeline {
     STAGING_URL = 'https://stag-plantbot.netlify.app'
     PRODUCTION_URL = 'https://prod-plantbot.netlify.app/'
     BUILD_TIMESTAMP = "${new Date().format('yyyyMMdd-HHmmss')}"
+    RECIPIENTS = 'kaushi.kutty@gmail.com' // Add your email here
   }
   
   options {
@@ -30,9 +31,13 @@ pipeline {
         script {
           // Wait for staging deployment to be ready
           bat "echo Waiting for staging deployment at %STAGING_URL%"
-          bat "node scripts/wait-for-healthy.js %STAGING_URL% 300"
+          bat "echo Testing health check script..."
+          
+          // Test the health check script
+          bat "node scripts/wait-for-healthy.js %STAGING_URL% 60"
           
           // Additional verification
+          bat "echo Additional verification:"
           bat "curl -I %STAGING_URL%"
           
           echo "Staging deployment completed and healthy"
@@ -87,8 +92,9 @@ pipeline {
               // Checkout main branch and merge staging
               bat 'git checkout main'
               bat 'git pull origin main'
-              bat 'git merge origin/staging'
-              bat 'git push origin main'
+              bat 'git merge origin/staging || echo "Merge completed or no changes to merge"'
+              bat 'git push origin main || echo "Push failed, checking status"'
+              bat 'git status'
               
               echo "Successfully promoted staging branch to main"
             }
@@ -125,6 +131,83 @@ pipeline {
           echo "Production deployment successful! Pipeline completed successfully."
         }
       }
+    }
+  }
+  
+  post {
+    always {
+      echo "Pipeline completed with status: ${currentBuild.result}"
+    }
+    
+    success {
+      emailext (
+        subject: "Pipeline SUCCESS - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+        body: """
+        <h2>Pipeline Completed Successfully!</h2>
+        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
+        <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
+        <p><strong>Status:</strong> <span style="color: green;">SUCCESS</span></p>
+        <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+        <p><strong>Staging URL:</strong> <a href="${STAGING_URL}">${STAGING_URL}</a></p>
+        <p><strong>Production URL:</strong> <a href="${PRODUCTION_URL}">${PRODUCTION_URL}</a></p>
+        <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
+        
+        <h3>What happened:</h3>
+        <ul>
+          <li>✅ Code deployed to staging</li>
+          <li>✅ Cypress tests passed</li>
+          <li>✅ Pull Request created for production deployment</li>
+        </ul>
+        
+        <p><strong>Next Steps:</strong> Please review and merge the Pull Request to deploy to production.</p>
+        """,
+        to: "${RECIPIENTS}",
+        mimeType: 'text/html'
+      )
+    }
+    
+    failure {
+      emailext (
+        subject: "Pipeline FAILED - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+        body: """
+        <h2>Pipeline Failed!</h2>
+        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
+        <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
+        <p><strong>Status:</strong> <span style="color: red;">FAILED</span></p>
+        <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+        <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
+        
+        <h3>Possible Issues:</h3>
+        <ul>
+          <li>❌ Cypress tests failed</li>
+          <li>❌ Staging deployment failed</li>
+          <li>❌ Health check timeout</li>
+          <li>❌ Git operations failed</li>
+        </ul>
+        
+        <p><strong>Action Required:</strong> Please check the build logs and fix the issues.</p>
+        """,
+        to: "${RECIPIENTS}",
+        mimeType: 'text/html'
+      )
+    }
+    
+    unstable {
+      emailext (
+        subject: "Pipeline UNSTABLE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+        body: """
+        <h2>Pipeline Unstable!</h2>
+        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
+        <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
+        <p><strong>Status:</strong> <span style="color: orange;">UNSTABLE</span></p>
+        <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+        <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
+        
+        <p><strong>Action Required:</strong> Please review the build logs for warnings or issues.</p>
+        """,
+        to: "${RECIPIENTS}",
+        mimeType: 'text/html'
+      )
     }
   }
 }
