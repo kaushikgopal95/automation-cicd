@@ -29,7 +29,11 @@ pipeline {
       steps {
         script {
           // Wait for staging deployment to be ready
+          bat "echo Waiting for staging deployment at %STAGING_URL%"
           bat "node scripts/wait-for-healthy.js %STAGING_URL% 300"
+          
+          // Additional verification
+          bat "curl -I %STAGING_URL%"
           
           echo "Staging deployment completed and healthy"
         }
@@ -44,6 +48,10 @@ pipeline {
           
           // Run Cypress tests against the live staging URL
           bat "set CYPRESS_BASE_URL=%STAGING_URL% && npx cypress run"
+          
+          // Debug: Check build status
+          echo "Current build result: ${currentBuild.result}"
+          echo "Build status: ${currentBuild.currentResult}"
         }
       }
       post {
@@ -62,10 +70,15 @@ pipeline {
     
     stage('Promote to Main Branch') {
       when {
-        expression { currentBuild.result == 'SUCCESS' }
+        expression { 
+          echo "Checking build result: ${currentBuild.result}"
+          echo "Checking current result: ${currentBuild.currentResult}"
+          return currentBuild.result == 'SUCCESS' 
+        }
       }
       steps {
         script {
+          echo "Build result is SUCCESS, proceeding with promotion"
           // Configure Git credentials
           withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
             // Set Git configuration

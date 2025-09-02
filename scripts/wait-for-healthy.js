@@ -11,16 +11,29 @@ const deadline = Date.now() + timeoutSeconds * 1000;
 
 function check() {
   const mod = url.startsWith('https') ? https : http;
-  mod
-    .get(url, res => {
-      if (res.statusCode >= 200 && res.statusCode < 400) {
-        console.log('Health check passed:', url);
-        process.exit(0);
-      } else {
-        retry();
-      }
-    })
-    .on('error', retry);
+  console.log('Checking health at:', url);
+  
+  const req = mod.get(url, res => {
+    console.log('Response status:', res.statusCode);
+    if (res.statusCode >= 200 && res.statusCode < 400) {
+      console.log('Health check passed:', url);
+      process.exit(0);
+    } else {
+      console.log('Health check failed with status:', res.statusCode);
+      retry();
+    }
+  });
+  
+  req.setTimeout(10000, () => {
+    console.log('Request timeout');
+    req.destroy();
+    retry();
+  });
+  
+  req.on('error', (err) => {
+    console.log('Request error:', err.message);
+    retry();
+  });
 }
 
 function retry() {
