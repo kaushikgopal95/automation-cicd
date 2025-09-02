@@ -84,9 +84,8 @@ pipeline {
             echo "Tests passed, proceeding with promotion to main branch"
             
             // Use Jenkins credentials for Git operations
-            withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
-              // Set remote URL with embedded credentials (one-time setup)
-              bat 'git remote set-url origin https://%GIT_USERNAME%:%GIT_PASSWORD%@github.com/kaushikgopal95/automation-cicd.git'
+            withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_TOKEN')]) {
+            bat 'git remote set-url origin https://x-access-token:%GIT_TOKEN%@github.com/kaushikgopal95/automation-cicd.git'
               
               // Direct merge approach
               bat 'git checkout main'
