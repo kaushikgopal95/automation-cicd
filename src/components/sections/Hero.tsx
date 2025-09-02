@@ -37,7 +37,7 @@ export const Hero = ({ onGetStarted }: HeroProps) => {
           {/* Badge */}
           <div className="inline-flex items-center space-x-2 bg-green-600/20 text-green-400 px-4 py-2 rounded-full text-sm font-medium mb-8 border border-green-600/30">
             <Leaf className="h-4 w-4" />
-            <span>Premium Quality Plants & Crafts</span>
+            <span>Premium Quality Plants & Flowers</span>
           </div>
 
           {/* Main Heading */}

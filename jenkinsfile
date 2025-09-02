@@ -2,10 +2,8 @@ pipeline {
   agent any
   
   environment {
-    IMAGE_NAME = 'plantbot'
-    STAGING_URL = 'http://localhost:3001'
-    PRODUCTION_URL = 'http://localhost:3002'
-    DOCKER_REGISTRY = 'docker.io'
+    STAGING_URL = 'https://stag-plantbot.netlify.app'
+    PRODUCTION_URL = 'https://prod-plantbot.netlify.app/'
     BUILD_TIMESTAMP = "${new Date().format('yyyyMMdd-HHmmss')}"
   }
   
@@ -16,55 +14,43 @@ pipeline {
   }
   
   stages {
-    stage('Build and Push Staging Image') {
+    stage('Deploy to Staging') {
       steps {
         script {
-          withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-            // Build staging image
-            bat "docker build --target staging -t %DOCKER_USERNAME%/%IMAGE_NAME%:staging ."
+          // Configure Git credentials
+          withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
+            // Set Git configuration
+            bat 'git config --global user.email "%GIT_USERNAME%@github.com"'
+            bat 'git config --global user.name "%GIT_USERNAME%"'
             
-            // Login to Docker Hub
-            bat "echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin"
+            // Push to staging branch (this triggers Render/Netlify deployment)
+            bat 'git checkout staging'
+            bat 'git pull origin staging'
+            bat 'git push origin staging'
+
+            bat 'curl -X POST -d {} "https://api.netlify.com/build_hooks/68b18e4052945d72b87627f4"'
             
-            // Push to Docker Hub
-            bat "docker push %DOCKER_USERNAME%/%IMAGE_NAME%:staging"
-            
-            echo "Staging image built and pushed to Docker Hub"
+            echo "Code pushed to staging branch - deployment triggered on Render/Netlify"
           }
         }
       }
     }
     
-    stage('Deploy to Local Staging') {
+    stage('Wait for Staging Deployment') {
       steps {
         script {
-          // Clean up port 3001 if occupied before deployment
-          bat "netstat -ano | findstr :3001 | findstr LISTENING && (for /f \"tokens=5\" %%a in ('netstat -ano ^| findstr :3001 ^| findstr LISTENING') do taskkill /f /pid %%a) || echo Port 3001 is free"
-          
-          // Add this right before the docker-compose command
-          bat "dir docker-compose.staging.yml"
-          bat "echo Current directory: %CD%"    
-          // Start/update staging environment (Docker Compose handles conflicts automatically)
-          bat "docker-compose -f docker-compose.staging.yml up -d"
-          
-          // Wait for staging to be healthy
+          // Wait for staging deployment to be ready
           bat "node scripts/wait-for-healthy.js %STAGING_URL% 300"
           
-          echo "Local staging deployment completed and healthy"
-        }
-      }
-      post {
-        failure {
-          echo "Staging deployment failed - checking logs"
-          bat "docker-compose -f docker-compose.staging.yml logs"
+          echo "Staging deployment completed and healthy"
         }
       }
     }
     
-    stage('Run Cypress Tests on Local Staging') {
+    stage('Run Cypress Tests on Staging') {
       steps {
         script {
-          // Run Cypress tests against the live local staging URL
+          // Run Cypress tests against the live staging URL
           bat "set CYPRESS_BASE_URL=%STAGING_URL% && npx cypress run"
         }
       }
@@ -83,7 +69,7 @@ pipeline {
         script {
           // Configure Git credentials
           withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
-            // Set Git configuration using existing credentials
+            // Set Git configuration
             bat 'git config --global user.email "%GIT_USERNAME%@github.com"'
             bat 'git config --global user.name "%GIT_USERNAME%"'
             
@@ -99,50 +85,24 @@ pipeline {
       }
     }
     
-    stage('Build and Push Production Image from Main') {
+    stage('Wait for Production Deployment') {
       when {
         expression { currentBuild.result == 'SUCCESS' }
       }
       steps {
         script {
-          withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-            // Checkout main branch and build production image
-            bat 'git checkout main'
-            bat 'git pull origin main'
-            bat "docker build --target production -t %DOCKER_USERNAME%/%IMAGE_NAME%:production ."
-            
-            // Push to Docker Hub
-            bat "docker push %DOCKER_USERNAME%/%IMAGE_NAME%:production"
-            
-            echo "Production image built from main branch and pushed to Docker Hub"
-          }
-        }
-      }
-    }
-    
-    stage('Deploy to Local Production') {
-      when {
-        expression { currentBuild.result == 'SUCCESS' }
-      }
-      steps {
-        script {
-          // Clean up port 3002 if occupied before deployment
-          bat "netstat -ano | findstr :3002 | findstr LISTENING && (for /f \"tokens=5\" %%a in ('netstat -ano ^| findstr :3002 ^| findstr LISTENING') do taskkill /f /pid %%a) || echo Port 3002 is free"
+          // Wait for production deployment to be ready
+
+          // Trigger Netlify production deployment
           
-          // Start/update production environment (Docker Compose handles conflicts automatically)
-          bat "docker-compose -f docker-compose.production.yml up -d"
+          bat 'curl -X POST -d {} "https://api.netlify.com/build_hooks/68b68850a4e373ee7b86e5fb"'
           
-          // Wait for production to be healthy
           bat "node scripts/wait-for-healthy.js %PRODUCTION_URL% 300"
           
-          echo "Local production deployment completed and healthy"
+          echo "Production deployment completed and healthy"
         }
       }
       post {
-        failure {
-          echo "Production deployment failed - checking logs"
-          bat "docker-compose -f docker-compose.production.yml logs"
-        }
         success {
           echo "Production deployment successful! Pipeline completed successfully."
         }
