@@ -69,49 +69,55 @@ pipeline {
     }
     
     stage('Promote to Main Branch') {
-      when {
-        expression { 
-          echo "Checking build result: ${currentBuild.result}"
-          echo "Checking current result: ${currentBuild.currentResult}"
-          return currentBuild.result == 'SUCCESS' 
-        }
-      }
       steps {
         script {
-          echo "Build result is SUCCESS, proceeding with promotion"
-          // Configure Git credentials
-          withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
-            // Set Git configuration
-            bat 'git config --global user.email "%GIT_USERNAME%@github.com"'
-            bat 'git config --global user.name "%GIT_USERNAME%"'
+          echo "Current build result: ${currentBuild.result}"
+          echo "Current build status: ${currentBuild.currentResult}"
+          
+          // Check if tests passed by looking at the previous stage result
+          if (currentBuild.result == 'SUCCESS' || currentBuild.currentResult == 'SUCCESS') {
+            echo "Tests passed, proceeding with promotion to main branch"
             
-            // Checkout main branch and merge staging
-            bat 'git checkout main'
-            bat 'git pull origin main'
-            bat 'git merge origin/staging'
-            bat 'git push origin main'
-            
-            echo "Successfully promoted staging branch to main"
+            // Configure Git credentials
+            withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
+              // Set Git configuration
+              bat 'git config --global user.email "%GIT_USERNAME%@github.com"'
+              bat 'git config --global user.name "%GIT_USERNAME%"'
+              
+              // Checkout main branch and merge staging
+              bat 'git checkout main'
+              bat 'git pull origin main'
+              bat 'git merge origin/staging'
+              bat 'git push origin main'
+              
+              echo "Successfully promoted staging branch to main"
+            }
+          } else {
+            echo "Tests failed or build not successful, skipping promotion"
+            currentBuild.result = 'FAILURE'
           }
         }
       }
     }
     
     stage('Wait for Production Deployment') {
-      when {
-        expression { currentBuild.result == 'SUCCESS' }
-      }
       steps {
         script {
-          // Wait for production deployment to be ready
-
-          // Trigger Netlify production deployment
+          echo "Current build result: ${currentBuild.result}"
           
-          bat 'curl -X POST -d {} "https://api.netlify.com/build_hooks/68b68850a4e373ee7b86e5fb"'
-          
-          bat "node scripts/wait-for-healthy.js %PRODUCTION_URL% 300"
-          
-          echo "Production deployment completed and healthy"
+          if (currentBuild.result == 'SUCCESS' || currentBuild.currentResult == 'SUCCESS') {
+            echo "Proceeding with production deployment"
+            
+            // Trigger Netlify production deployment
+            // bat 'curl -X POST -d {} "https://api.netlify.com/build_hooks/68b68850a4e373ee7b86e5fb"'
+            
+            // Wait for production deployment to be ready
+            bat "node scripts/wait-for-healthy.js %PRODUCTION_URL% 300"
+            
+            echo "Production deployment completed and healthy"
+          } else {
+            echo "Skipping production deployment due to failed tests"
+          }
         }
       }
       post {
