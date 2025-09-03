@@ -60,8 +60,8 @@ pipeline {
         withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_TOKEN')]) {
           bat 'echo "=== Using GitHub API to merge staging to main ==="'
           
-          // Use GitHub API to merge staging into main (no git push needed!)
-          bat 'powershell -Command "$headers = @{\'Authorization\' = \'token %GIT_TOKEN%\'; \'Accept\' = \'application/vnd.github.v3+json\'}; $body = @{base=\'main\'; head=\'staging\'; commit_message=\'Merge staging to main - Automated deployment\'} | ConvertTo-Json; $response = Invoke-RestMethod -Uri \'https://api.github.com/repos/kaushikgopal95/automation-cicd/merges\' -Method Post -Headers $headers -Body $body; Write-Host \'Merge successful:\' $response.sha"'
+          // Use GitHub API to merge staging into main with error handling
+          bat 'powershell -Command "try { $headers = @{\'Authorization\' = \'token %GIT_TOKEN%\'; \'Accept\' = \'application/vnd.github.v3+json\'}; $body = @{base=\'main\'; head=\'staging\'; commit_message=\'Merge staging to main - Automated deployment\'} | ConvertTo-Json; Write-Host \'Sending merge request...\'; Write-Host \'Body:\' $body; $response = Invoke-RestMethod -Uri \'https://api.github.com/repos/kaushikgopal95/automation-cicd/merges\' -Method Post -Headers $headers -Body $body; Write-Host \'Merge successful! SHA:\' $response.sha; Write-Host \'Commit URL:\' $response.html_url } catch { Write-Host \'Merge failed:\' $_.Exception.Message; Write-Host \'Status Code:\' $_.Exception.Response.StatusCode; Write-Host \'Response Body:\' $_.Exception.Response; exit 1 }"'
         }
         
         echo "Successfully promoted staging branch to main"
