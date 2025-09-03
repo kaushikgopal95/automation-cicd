@@ -57,11 +57,12 @@ pipeline {
       steps {
         echo "Tests passed, promoting staging to main branch"
         
-        sshagent(['github-ssh-key']) {
+        withCredentials([sshUserPrivateKey(credentialsId: 'github-ssh-key', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USERNAME')]) {
           bat 'echo "=== Starting Git Operations ==="'
           bat 'git remote set-url origin git@github.com:kaushikgopal95/automation-cicd.git'
           bat 'git config user.name "kaushikgopal95"'
           bat 'git config user.email "kaushikgopal95@users.noreply.github.com"'
+          bat 'git config core.sshCommand "ssh -i %SSH_KEY_FILE% -o StrictHostKeyChecking=no"'
           bat 'git checkout main'
           bat 'git pull origin main'
           bat 'git merge origin/staging'
