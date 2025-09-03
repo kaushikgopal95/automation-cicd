@@ -83,15 +83,30 @@ pipeline {
           if (currentBuild.result == 'SUCCESS' || currentBuild.currentResult == 'SUCCESS') {
             echo "Tests passed, proceeding with promotion to main branch"
 
-            // Use SSH agent for authentication
+                        // Use SSH agent for authentication
             sshagent(['github-ssh-key']) {
+              bat 'echo "=== Starting Git Operations ==="'
               bat 'git remote set-url origin git@github.com:kaushikgopal95/automation-cicd.git'
+              bat 'echo "Remote URL set successfully"'
+              
               bat 'git config user.name "kaushikgopal95"'
               bat 'git config user.email "kaushikgopal95@users.noreply.github.com"'
+              bat 'echo "Git config set successfully"'
+              
             bat 'git checkout main'
+              bat 'echo "Checked out main branch"'
+              
             bat 'git pull origin main'
+              bat 'echo "Pulled latest main branch"'
+              
             bat 'git merge origin/staging'
+              bat 'echo "Merged staging into main"'
+              
+              bat 'git status'
+              bat 'echo "Git status after merge"'
+              
             bat 'git push origin main'
+              bat 'echo "Pushed to main branch successfully"'
             
             echo "Successfully promoted staging branch to main"
           }
