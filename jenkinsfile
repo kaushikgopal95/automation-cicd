@@ -5,7 +5,7 @@ pipeline {
     STAGING_URL = 'https://stag-plantbot.netlify.app'
     PRODUCTION_URL = 'https://prod-plantbot.netlify.app/'
     BUILD_TIMESTAMP = "${new Date().format('yyyyMMdd-HHmmss')}"
-    RECIPIENTS = 'kaushi.kutty@gmail.com' // Add your email here
+    RECIPIENTS = 'kaushi.kutty@gmail.com'
   }
   
   options {
@@ -18,9 +18,7 @@ pipeline {
     // stage('Deploy to Staging') {
     //   steps {
     //     script {
-    //       // Trigger Netlify deployment using the build hook
     //       bat 'curl -X POST -d {} "https://api.netlify.com/build_hooks/68b18e4052945d72b87627f4"'
-          
     //       echo "Netlify staging deployment triggered"
     //     }
     //   }
@@ -29,17 +27,9 @@ pipeline {
     stage('Wait for Staging Deployment') {
       steps {
         script {
-          // Wait for staging deployment to be ready
           bat "echo Waiting for staging deployment at %STAGING_URL%"
-          bat "echo Testing health check script..."
-          
-          // Test the health check script
           bat "node scripts/wait-for-healthy.js %STAGING_URL% 60"
-          
-          // Additional verification
-          bat "echo Additional verification:"
           bat "curl -I %STAGING_URL%"
-          
           echo "Staging deployment completed and healthy"
         }
       }
@@ -48,25 +38,18 @@ pipeline {
     stage('Run Cypress Tests on Staging') {
       steps {
         script {
-          // Install dependencies first
           bat 'npm install'
-          
-          // Run Cypress tests against the live staging URL
           bat "set CYPRESS_BASE_URL=%STAGING_URL% && npx cypress run"
-          
-          // Debug: Check build status
-          echo "Current build result: ${currentBuild.result}"
-          echo "Build status: ${currentBuild.currentResult}"
+          echo "Build status after Cypress: ${currentBuild.currentResult}"
         }
       }
       post {
         always {
-          // Archive Cypress artifacts if they exist
           script {
             try {
               archiveArtifacts artifacts: 'cypress/videos/**/*,cypress/screenshots/**/*', allowEmptyArchive: true
             } catch (Exception e) {
-              echo "No Cypress artifacts found to archive: ${e.getMessage()}"
+              echo "No Cypress artifacts found: ${e.getMessage()}"
             }
           }
         }
@@ -74,68 +57,41 @@ pipeline {
     }
     
     stage('Promote to Main Branch') {
+      when {
+        expression { currentBuild.currentResult == 'SUCCESS' }
+      }
       steps {
         script {
-          echo "Current build result: ${currentBuild.result}"
-          echo "Current build status: ${currentBuild.currentResult}"
+          echo "Tests passed, promoting staging to main branch"
           
-          // Check if tests passed
-          if (currentBuild.result == 'SUCCESS' || currentBuild.currentResult == 'SUCCESS') {
-            echo "Tests passed, proceeding with promotion to main branch"
+          sshagent(['github-ssh-key']) {
+            bat 'echo "=== Starting Git Operations ==="'
+            bat 'git remote set-url origin git@github.com:kaushikgopal95/automation-cicd.git'
+            bat 'git config user.name "kaushikgopal95"'
+            bat 'git config user.email "kaushikgopal95@users.noreply.github.com"'
             
-            // Use SSH agent with the SSH credentials
-            sshagent(['github-ssh-key']) {
-              bat 'echo "=== Starting Git Operations ==="'
-              bat 'git remote set-url origin git@github.com:kaushikgopal95/automation-cicd.git'
-              bat 'echo "Remote URL set successfully"'
-              
-              bat 'git config user.name "kaushikgopal95"'
-              bat 'git config user.email "kaushikgopal95@users.noreply.github.com"'
-              bat 'echo "Git config set successfully"'
-              
-              bat 'git checkout main'
-              bat 'echo "Checked out main branch"'
-              
-              bat 'git pull origin main'
-              bat 'echo "Pulled latest main branch"'
-              
-              bat 'git merge origin/staging'
-              bat 'echo "Merged staging into main"'
-              
-              bat 'git status'
-              bat 'echo "Git status after merge"'
-              
-              bat 'git push origin main'
-              bat 'echo "Pushed to main branch successfully"'
-              
-              echo "Successfully promoted staging branch to main"
-            }
-          } else {
-            echo "Tests failed or build not successful, skipping promotion"
-            currentBuild.result = 'FAILURE'
+            bat 'git checkout main'
+            bat 'git pull origin main'
+            bat 'git merge origin/staging'
+            bat 'git status'
+            bat 'git push origin main'
+            
+            echo "Successfully promoted staging branch to main"
           }
         }
       }
     }
     
     stage('Wait for Production Deployment') {
+      when {
+        expression { currentBuild.currentResult == 'SUCCESS' }
+      }
       steps {
         script {
-          echo "Current build result: ${currentBuild.result}"
-          
-          if (currentBuild.result == 'SUCCESS' || currentBuild.currentResult == 'SUCCESS') {
-            echo "Proceeding with production deployment"
-            
-            // Production deployment will be triggered automatically by Netlify when main branch is updated
-            bat 'echo "Main branch updated - Netlify will auto-deploy to production"'
-            
-            // Wait for production deployment to be ready
+          echo "Proceeding with production deployment"
+          bat 'echo "Main branch updated - Netlify will auto-deploy to production"'
           bat "node scripts/wait-for-healthy.js %PRODUCTION_URL% 300"
-          
-            echo "Production deployment completed and healthy"
-          } else {
-            echo "Skipping production deployment due to failed tests"
-          }
+          echo "Production deployment completed and healthy"
         }
       }
       post {
@@ -148,7 +104,7 @@ pipeline {
   
   post {
     always {
-      echo "Pipeline completed with status: ${currentBuild.result}"
+      echo "Pipeline completed with status: ${currentBuild.currentResult}"
     }
     
     success {
@@ -163,9 +119,6 @@ pipeline {
         <p><strong>Staging URL:</strong> <a href="${STAGING_URL}">${STAGING_URL}</a></p>
         <p><strong>Production URL:</strong> <a href="${PRODUCTION_URL}">${PRODUCTION_URL}</a></p>
         <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
-        
-        
-        
         <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
         """,
         to: "${RECIPIENTS}",
