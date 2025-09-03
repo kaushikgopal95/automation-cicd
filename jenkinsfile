@@ -79,11 +79,11 @@ pipeline {
           echo "Current build result: ${currentBuild.result}"
           echo "Current build status: ${currentBuild.currentResult}"
           
-          // Only promote if tests passed
+          // Check if tests passed
           if (currentBuild.result == 'SUCCESS' || currentBuild.currentResult == 'SUCCESS') {
             echo "Tests passed, proceeding with promotion to main branch"
-
-            // Use SSH agent for authentication
+            
+            // Use SSH agent with the SSH credentials
             sshagent(['github-ssh-key']) {
               bat 'echo "=== Starting Git Operations ==="'
               bat 'git remote set-url origin git@github.com:kaushikgopal95/automation-cicd.git'
