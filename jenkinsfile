@@ -57,10 +57,10 @@ pipeline {
       steps {
         echo "Tests passed, promoting staging to main branch"
         
-        withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
-          bat 'echo "=== Using HTTPS with PAT to merge staging to main ==="'
-          
+        withCredentials([string(credentialsId: 'github-credentials', variable: 'GIT_TOKEN')]) {
           bat '''
+            echo "=== Using HTTPS with PAT to merge staging to main ==="
+
             git config user.name "kaushikgopal95"
             git config user.email "kaushikgopal95@users.noreply.github.com"
 
@@ -68,21 +68,17 @@ pipeline {
             git config --global credential.helper ""
             set GIT_ASKPASS=echo
 
-            REM Set remote URL with credentials (use x-access-token format)
+            REM Set remote URL using PAT (x-access-token format)
             git remote set-url origin https://x-access-token:%GIT_TOKEN%@github.com/kaushikgopal95/automation-cicd.git
 
-            REM Git operations
+            REM Rebase and merge staging into main
             git fetch origin main
             git checkout main
-            
-            REM Handle diverged histories - rebase first, then force push if needed
             git pull origin main --rebase || echo "Rebase skipped - proceeding with merge"
             git merge origin/staging --no-edit
-            git status
-            
-            REM Force push to overwrite remote with merged result
+
+            REM Push changes
             git push origin main --force || echo "Push failed - checking status"
-            git status
           '''
         }
         
