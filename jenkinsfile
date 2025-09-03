@@ -17,31 +17,25 @@ pipeline {
   stages {
     // stage('Deploy to Staging') {
     //   steps {
-    //     script {
-    //       bat 'curl -X POST -d {} "https://api.netlify.com/build_hooks/68b18e4052945d72b87627f4"'
-    //       echo "Netlify staging deployment triggered"
-    //     }
+    //     bat 'curl -X POST -d {} "https://api.netlify.com/build_hooks/68b18e4052945d72b87627f4"'
+    //     echo "Netlify staging deployment triggered"
     //   }
     // }
     
     stage('Wait for Staging Deployment') {
       steps {
-        script {
-          bat "echo Waiting for staging deployment at %STAGING_URL%"
-          bat "node scripts/wait-for-healthy.js %STAGING_URL% 60"
-          bat "curl -I %STAGING_URL%"
-          echo "Staging deployment completed and healthy"
-        }
+        bat "echo Waiting for staging deployment at %STAGING_URL%"
+        bat "node scripts/wait-for-healthy.js %STAGING_URL% 60"
+        bat "curl -I %STAGING_URL%"
+        echo "Staging deployment completed and healthy"
       }
     }
     
     stage('Run Cypress Tests on Staging') {
       steps {
-        script {
-          bat 'npm install'
-          bat "set CYPRESS_BASE_URL=%STAGING_URL% && npx cypress run"
-          echo "Build status after Cypress: ${currentBuild.currentResult}"
-        }
+        bat 'npm install'
+        bat "set CYPRESS_BASE_URL=%STAGING_URL% && npx cypress run"
+        echo "Build status after Cypress: ${currentBuild.currentResult}"
       }
       post {
         always {
@@ -61,24 +55,21 @@ pipeline {
         expression { currentBuild.currentResult == 'SUCCESS' }
       }
       steps {
-        script {
-          echo "Tests passed, promoting staging to main branch"
-          
-          sshagent(['github-ssh-key']) {
-            bat 'echo "=== Starting Git Operations ==="'
-            bat 'git remote set-url origin git@github.com:kaushikgopal95/automation-cicd.git'
-            bat 'git config user.name "kaushikgopal95"'
-            bat 'git config user.email "kaushikgopal95@users.noreply.github.com"'
-            
-            bat 'git checkout main'
-            bat 'git pull origin main'
-            bat 'git merge origin/staging'
-            bat 'git status'
-            bat 'git push origin main'
-            
-            echo "Successfully promoted staging branch to main"
-          }
+        echo "Tests passed, promoting staging to main branch"
+        
+        sshagent(['github-ssh-key']) {
+          bat 'echo "=== Starting Git Operations ==="'
+          bat 'git remote set-url origin git@github.com:kaushikgopal95/automation-cicd.git'
+          bat 'git config user.name "kaushikgopal95"'
+          bat 'git config user.email "kaushikgopal95@users.noreply.github.com"'
+          bat 'git checkout main'
+          bat 'git pull origin main'
+          bat 'git merge origin/staging'
+          bat 'git status'
+          bat 'git push origin main'
         }
+        
+        echo "Successfully promoted staging branch to main"
       }
     }
     
@@ -87,12 +78,10 @@ pipeline {
         expression { currentBuild.currentResult == 'SUCCESS' }
       }
       steps {
-        script {
-          echo "Proceeding with production deployment"
-          bat 'echo "Main branch updated - Netlify will auto-deploy to production"'
-          bat "node scripts/wait-for-healthy.js %PRODUCTION_URL% 300"
-          echo "Production deployment completed and healthy"
-        }
+        echo "Proceeding with production deployment"
+        bat 'echo "Main branch updated - Netlify will auto-deploy to production"'
+        bat "node scripts/wait-for-healthy.js %PRODUCTION_URL% 300"
+        echo "Production deployment completed and healthy"
       }
       post {
         success {
