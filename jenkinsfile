@@ -70,6 +70,7 @@ pipeline {
 
             REM Set remote URL using PAT (x-access-token format)
             git remote set-url origin https://x-access-token:%GIT_TOKEN%@github.com/kaushikgopal95/automation-cicd.git
+            bat 'echo Remote URL: https://x-access-token:***@github.com/kaushikgopal95/automation-cicd.git'
 
             REM Rebase and merge staging into main
             git fetch origin main
@@ -78,7 +79,7 @@ pipeline {
             git merge origin/staging --no-edit
 
             REM Push changes
-            git push origin main --force || echo "Push failed - checking status"
+            git push origin main || echo "Push failed - checking status"
           '''
         }
         
