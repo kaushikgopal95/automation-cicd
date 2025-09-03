@@ -62,6 +62,11 @@ pipeline {
           bat 'echo "SSH Key File: %SSH_KEY_FILE%"'
           bat 'echo "SSH Username: %SSH_USERNAME%"'
           
+          // Fix SSH key permissions (Windows)
+          bat 'icacls "%SSH_KEY_FILE%" /inheritance:r'
+          bat 'icacls "%SSH_KEY_FILE%" /grant:r "%USERNAME%:F"'
+          bat 'icacls "%SSH_KEY_FILE%" /remove "BUILTIN\\Users"'
+          
           // Test SSH connection first
           bat 'ssh -i "%SSH_KEY_FILE%" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -T git@github.com'
           
