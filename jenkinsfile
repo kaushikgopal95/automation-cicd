@@ -68,8 +68,8 @@ pipeline {
             git config --global credential.helper ""
             set GIT_ASKPASS=echo
 
-            REM Set remote URL with credentials
-            git remote set-url origin https://%GIT_USER%:%GIT_TOKEN%@github.com/kaushikgopal95/automation-cicd.git
+            REM Set remote URL with credentials (use x-access-token format)
+            git remote set-url origin https://x-access-token:%GIT_TOKEN%@github.com/kaushikgopal95/automation-cicd.git
 
             REM Git operations
             git fetch origin main
