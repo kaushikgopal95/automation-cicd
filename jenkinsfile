@@ -5,7 +5,7 @@ pipeline {
     STAGING_URL = 'https://stag-plantbot.netlify.app'
     PRODUCTION_URL = 'https://prod-plantbot.netlify.app/'
     BUILD_TIMESTAMP = "${new Date().format('yyyyMMdd-HHmmss')}"
-    RECIPIENTS = 'kaushi.kutty@gmail.com'
+    RECIPIENTS = 'kaushik.gopal95@gmail.com'
   }
   
   options {
@@ -108,69 +108,95 @@ pipeline {
   post {
     always {
       echo "Pipeline completed with status: ${currentBuild.currentResult}"
+      echo "Email recipients: ${RECIPIENTS}"
+      echo "Build URL: ${env.BUILD_URL}"
     }
     
     success {
-      emailext (
-        subject: "Pipeline SUCCESS - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-        body: """
-        <h2>Pipeline Completed Successfully!</h2>
-        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
-        <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
-        <p><strong>Status:</strong> <span style="color: green;">SUCCESS</span></p>
-        <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-        <p><strong>Staging URL:</strong> <a href="${STAGING_URL}">${STAGING_URL}</a></p>
-        <p><strong>Production URL:</strong> <a href="${PRODUCTION_URL}">${PRODUCTION_URL}</a></p>
-        <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
-        <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
-        """,
-        to: "${RECIPIENTS}",
-        mimeType: 'text/html'
-      )
+      script {
+        try {
+          echo "Attempting to send success email to: ${RECIPIENTS}"
+          emailext (
+            subject: "Pipeline SUCCESS - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+            body: """
+            <h2>Pipeline Completed Successfully!</h2>
+            <p><strong>Project:</strong> ${env.JOB_NAME}</p>
+            <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
+            <p><strong>Status:</strong> <span style="color: green;">SUCCESS</span></p>
+            <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+            <p><strong>Staging URL:</strong> <a href="${STAGING_URL}">${STAGING_URL}</a></p>
+            <p><strong>Production URL:</strong> <a href="${PRODUCTION_URL}">${PRODUCTION_URL}</a></p>
+            <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
+            <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
+            """,
+            to: "${RECIPIENTS}",
+            mimeType: 'text/html'
+          )
+          echo "Success email sent successfully"
+        } catch (Exception e) {
+          echo "Failed to send success email: ${e.getMessage()}"
+        }
+      }
     }
     
     failure {
-      emailext (
-        subject: "Pipeline FAILED - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-        body: """
-        <h2>Pipeline Failed!</h2>
-        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
-        <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
-        <p><strong>Status:</strong> <span style="color: red;">FAILED</span></p>
-        <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-        <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
-        
-        <h3>Possible Issues:</h3>
-        <ul>
-          <li>❌ Cypress tests failed</li>
-          <li>❌ Staging deployment failed</li>
-          <li>❌ Health check timeout</li>
-          <li>❌ Git operations failed</li>
-        </ul>
-        
-        <p><strong>Action Required:</strong> Please check the build logs and fix the issues.</p>
-        """,
-        to: "${RECIPIENTS}",
-        mimeType: 'text/html'
-      )
+      script {
+        try {
+          echo "Attempting to send failure email to: ${RECIPIENTS}"
+          emailext (
+            subject: "Pipeline FAILED - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+            body: """
+            <h2>Pipeline Failed!</h2>
+            <p><strong>Project:</strong> ${env.JOB_NAME}</p>
+            <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
+            <p><strong>Status:</strong> <span style="color: red;">FAILED</span></p>
+            <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+            <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
+            
+            <h3>Possible Issues:</h3>
+            <ul>
+              <li>❌ Cypress tests failed</li>
+              <li>❌ Staging deployment failed</li>
+              <li>❌ Health check timeout</li>
+              <li>❌ Git operations failed</li>
+            </ul>
+            
+            <p><strong>Action Required:</strong> Please check the build logs and fix the issues.</p>
+            """,
+            to: "${RECIPIENTS}",
+            mimeType: 'text/html'
+          )
+          echo "Failure email sent successfully"
+        } catch (Exception e) {
+          echo "Failed to send failure email: ${e.getMessage()}"
+        }
+      }
     }
     
     unstable {
-      emailext (
-        subject: "Pipeline UNSTABLE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-        body: """
-        <h2>Pipeline Unstable!</h2>
-        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
-        <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
-        <p><strong>Status:</strong> <span style="color: orange;">UNSTABLE</span></p>
-        <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-        <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
-        
-        <p><strong>Action Required:</strong> Please review the build logs for warnings or issues.</p>
-        """,
-        to: "${RECIPIENTS}",
-        mimeType: 'text/html'
-      )
+      script {
+        try {
+          echo "Attempting to send unstable email to: ${RECIPIENTS}"
+          emailext (
+            subject: "Pipeline UNSTABLE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+            body: """
+            <h2>Pipeline Unstable!</h2>
+            <p><strong>Project:</strong> ${env.JOB_NAME}</p>
+            <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
+            <p><strong>Status:</strong> <span style="color: orange;">UNSTABLE</span></p>
+            <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+            <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
+            
+            <p><strong>Action Required:</strong> Please review the build logs for warnings or issues.</p>
+            """,
+            to: "${RECIPIENTS}",
+            mimeType: 'text/html'
+          )
+          echo "Unstable email sent successfully"
+        } catch (Exception e) {
+          echo "Failed to send unstable email: ${e.getMessage()}"
+        }
+      }
     }
   }
 }
