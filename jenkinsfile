@@ -83,31 +83,18 @@ pipeline {
           if (currentBuild.result == 'SUCCESS' || currentBuild.currentResult == 'SUCCESS') {
             echo "Tests passed, proceeding with promotion to main branch"
 
-            // Use Jenkins credentials (username = anything, password = PAT)
-            withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_TOKEN')]) {
-
-              // Configure remote with PAT
-              bat """
-                git remote set-url origin https://x-access-token:${GIT_TOKEN}@github.com/kaushikgopal95/automation-cicd.git
-                git config user.name "${GIT_USERNAME}"
-                git config user.email "kaushikgopal95@users.noreply.github.com"
-              """
-
-              // Merge staging → main
-              bat """
-                git checkout main
-                git pull origin main
-                git merge origin/staging
-              """
-
-              // Verify auth
-              bat 'git ls-remote origin'
-
-              // Push changes
-              bat 'git push origin main'
-
-              echo "Successfully promoted staging branch to main"
-            }
+            // Use SSH agent for authentication
+            sshagent(['github-ssh-key']) {
+              bat 'git remote set-url origin git@github.com:kaushikgopal95/automation-cicd.git'
+              bat 'git config user.name "kaushikgopal95"'
+              bat 'git config user.email "kaushikgopal95@users.noreply.github.com"'
+            bat 'git checkout main'
+            bat 'git pull origin main'
+            bat 'git merge origin/staging'
+            bat 'git push origin main'
+            
+            echo "Successfully promoted staging branch to main"
+          }
           } else {
             echo "Tests failed or build not successful, skipping promotion"
             currentBuild.result = 'FAILURE'
@@ -128,8 +115,8 @@ pipeline {
             bat 'echo "Main branch updated - Netlify will auto-deploy to production"'
             
             // Wait for production deployment to be ready
-            bat "node scripts/wait-for-healthy.js %PRODUCTION_URL% 300"
-            
+          bat "node scripts/wait-for-healthy.js %PRODUCTION_URL% 300"
+          
             echo "Production deployment completed and healthy"
           } else {
             echo "Skipping production deployment due to failed tests"
