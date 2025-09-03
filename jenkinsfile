@@ -68,17 +68,21 @@ pipeline {
             git config --global credential.helper ""
             set GIT_ASKPASS=echo
 
+
             REM Set remote URL using PAT (x-access-token format)
+
             git remote set-url origin https://x-access-token:%GIT_TOKEN%@github.com/kaushikgopal95/automation-cicd.git
 
             REM Rebase and merge staging into main
             git fetch origin main
             git checkout main
+
             git pull origin main --rebase || echo "Rebase skipped - proceeding with merge"
             git merge origin/staging --no-edit
 
             REM Push changes
             git push origin main --force || echo "Push failed - checking status"
+
           '''
         }
         
