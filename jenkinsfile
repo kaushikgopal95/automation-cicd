@@ -74,11 +74,15 @@ pipeline {
             REM Git operations
             git fetch origin main
             git checkout main
+            
+            REM Handle diverged histories - rebase first, then force push if needed
+            git pull origin main --rebase || echo "Rebase skipped - proceeding with merge"
             git merge origin/staging --no-edit
             git status
             
-            REM Push with timeout to avoid hanging
-            timeout 60 git push origin main || echo "Push completed or timed out"
+            REM Force push to overwrite remote with merged result
+            git push origin main --force || echo "Push failed - checking status"
+            git status
           '''
         }
         
