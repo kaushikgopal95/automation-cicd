@@ -82,7 +82,7 @@ export const ContactPage = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold">Our Location</h3>
-                  <p className="text-gray-400">123 Green Street, Plant City, PC 12345</p>
+                  <p className="text-gray-400">Bangalore, India</p>
                 </div>
               </div>
               
@@ -92,7 +92,7 @@ export const ContactPage = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold">Email Us</h3>
-                  <p className="text-gray-400">hello@plantbot.com</p>
+                  <p className="text-gray-400">kaushik.gopal95@gmail.com</p>
                 </div>
               </div>
               
@@ -102,7 +102,7 @@ export const ContactPage = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold">Call Us</h3>
-                  <p className="text-gray-400">(555) 123-4567</p>
+                  <p className="text-gray-400">+91-8147325107</p>
                 </div>
               </div>
               

@@ -71,17 +71,9 @@ const Index = () => {
         <section id="featured-products">
           <FeaturedProducts />
         </section>
-        {/* Commented out as per request
-        <section id="categories">
-          <Categories />
-        </section>
-        <section id="plant-care">
-          <PlantCare />
-        </section>
-        <section id="about">
+        <section id="about" className="py-16 md:py-24 bg-gray-900">
           <AboutUs />
         </section>
-        */}
         <section id="newsletter">
           <Newsletter />
         </section>
