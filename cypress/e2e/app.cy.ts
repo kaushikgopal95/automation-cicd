@@ -2,7 +2,7 @@
 
 describe('PlantBot App Tests', () => {
   beforeEach(() => {
-    // Visit the app before each test
+    
     // cy.visit('http://localhost:8081')
     cy.visit('/')
   })

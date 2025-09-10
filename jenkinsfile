@@ -26,9 +26,11 @@ pipeline {
     
     stage('Run Cypress Tests on Staging') {
       steps {
-        bat 'npm install'
-        bat "set CYPRESS_BASE_URL=%STAGING_URL% && npx cypress run --reporter json --reporter-options output=cypress/results/results.json"
-        echo "Build status after Cypress: ${currentBuild.currentResult}"
+        withCredentials([string(credentialsId: 'cypress-record-key', variable: 'CYPRESS_RECORD_KEY')]) {
+          bat 'npm install'
+          bat "set CYPRESS_BASE_URL=%STAGING_URL% && npx cypress run --record --key %CYPRESS_RECORD_KEY% --browser chrome"
+          echo "Cypress tests executed and recorded to Cypress Dashboard"
+        }
       }
       post {
         always {
