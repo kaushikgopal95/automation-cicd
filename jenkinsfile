@@ -1,19 +1,19 @@
 pipeline {
   agent any
-  
+
   environment {
     STAGING_URL = 'https://stag-plantbot.netlify.app'
     PRODUCTION_URL = 'https://prod-plantbot.netlify.app/'
     BUILD_TIMESTAMP = "${new Date().format('yyyyMMdd-HHmmss')}"
     RECIPIENTS = 'kaushik.gopal95@gmail.com'
   }
-  
+
   options {
     timeout(time: 30, unit: 'MINUTES')
     retry(1)
     timestamps()
   }
-  
+
   stages {
     stage('Wait for Staging Deployment') {
       steps {
@@ -23,14 +23,12 @@ pipeline {
         echo "Staging deployment completed and healthy"
       }
     }
-    
+
     stage('Run Cypress Tests on Staging') {
       steps {
-        withCredentials([string(credentialsId: 'cypress-record-key', variable: 'CYPRESS_RECORD_KEY')]) {
-          bat 'npm install'
-          bat "set CYPRESS_BASE_URL=%STAGING_URL% && npx cypress run --record --key %CYPRESS_RECORD_KEY% --browser chrome"
-          echo "Cypress tests executed and recorded to Cypress Dashboard"
-        }
+        bat 'npm install'
+        bat "set CYPRESS_BASE_URL=%STAGING_URL% && npx cypress run --record --key %CYPRESS_RECORD_KEY% --browser chrome"
+        echo "Build status after Cypress: ${currentBuild.currentResult}"
       }
       post {
         always {
@@ -44,48 +42,18 @@ pipeline {
         }
       }
     }
-    
-    stage('Promote to Main Branch') {
+
+    stage('Create PR from Staging to Main') {
       when {
         expression { currentBuild.currentResult == 'SUCCESS' }
       }
       steps {
-        echo "Tests passed, promoting staging to main branch"
-        
-        withCredentials([string(credentialsId: 'github-credentials', variable: 'GIT_TOKEN')]) {
-          bat '''
-            echo "=== Using HTTPS with PAT to merge staging to main ==="
-
-            git config user.name "kaushikgopal95"
-            git config user.email "kaushikgopal95@users.noreply.github.com"
-
-            REM Disable interactive prompts
-            git config --global credential.helper ""
-            set GIT_ASKPASS=echo
-
-            REM Set remote URL using PAT (x-access-token format)
-            git remote set-url origin https://x-access-token:%GIT_TOKEN%@github.com/kaushikgopal95/automation-cicd.git
-            echo "Remote URL configured"
-
-            REM Rebase and merge staging into main
-            git fetch origin main
-            git checkout main
-            git pull origin main --rebase || echo "Rebase skipped - proceeding with merge"
-            git merge origin/staging --no-edit
-
-            REM Push changes
-            git push origin main
-            if %ERRORLEVEL% neq 0 (
-              echo "Git push failed with error code: %ERRORLEVEL%"
-              exit /b 1
-            )
-          '''
+        withCredentials([string(credentialsId: 'github-credentials', variable: 'GITHUB_TOKEN')]) {
+          bat """curl -X POST -H "Authorization: token %GITHUB_TOKEN%" -d "{\\"title\\":\\"Auto PR: Merge Staging into Main\\",\\"head\\":\\"staging\\",\\"base\\":\\"main\\"}" https://api.github.com/repos/kaushikgopal95/automation-cicd/pulls"""
         }
-        
-        echo "Successfully promoted staging branch to main"
       }
     }
-    
+
     stage('Wait for Production Deployment') {
       when {
         expression { currentBuild.currentResult == 'SUCCESS' }
@@ -103,18 +71,18 @@ pipeline {
       }
     }
   }
-  
+
   post {
     always {
       echo "Pipeline completed with status: ${currentBuild.currentResult}"
       echo "Email recipients: ${RECIPIENTS}"
       echo "Build URL: ${env.BUILD_URL}"
     }
-    
+
     success {
       script {
         try {
-          echo "Sending success email to: ${RECIPIENTS}"
+          echo "Attempting to send success email to: ${RECIPIENTS}"
           emailext (
             subject: "Pipeline SUCCESS - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
             body: """
@@ -123,11 +91,14 @@ pipeline {
             <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
             <p><strong>Status:</strong> <span style="color: green;">SUCCESS</span></p>
             <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-            
+
+            <h3>Next Steps</h3>
+            <p>An automated pull request has been created to merge <strong>staging</strong> into <strong>main</strong>. Please review and approve the PR: <a href="https://github.com/kaushikgopal95/automation-cicd/pulls">View Pull Requests</a></p>
+
             <h3>Deployment URLs</h3>
             <p><strong>Staging URL:</strong> <a href="${STAGING_URL}">${STAGING_URL}</a></p>
             <p><strong>Production URL:</strong> <a href="${PRODUCTION_URL}">${PRODUCTION_URL}</a></p>
-            
+
             <h3>Links</h3>
             <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
             <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
@@ -136,17 +107,17 @@ pipeline {
             mimeType: 'text/html',
             from: 'jenkins@automation-cicd.com'
           )
-          echo "Success email sent"
+          echo "Success email sent successfully"
         } catch (Exception e) {
           echo "Failed to send success email: ${e.getMessage()}"
         }
       }
     }
-    
+
     failure {
       script {
         try {
-          echo "Sending failure email to: ${RECIPIENTS}"
+          echo "Attempting to send failure email to: ${RECIPIENTS}"
           emailext (
             subject: "Pipeline FAILED - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
             body: """
@@ -155,50 +126,18 @@ pipeline {
             <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
             <p><strong>Status:</strong> <span style="color: red;">FAILED</span></p>
             <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-            
+
             <h3>Links</h3>
             <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
             <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
-            
-            <p><strong>Action Required:</strong> Please check the build logs and fix the issues.</p>
             """,
             to: "${RECIPIENTS}",
             mimeType: 'text/html',
             from: 'jenkins@automation-cicd.com'
           )
-          echo "Failure email sent"
+          echo "Failure email sent successfully"
         } catch (Exception e) {
           echo "Failed to send failure email: ${e.getMessage()}"
-        }
-      }
-    }
-    
-    unstable {
-      script {
-        try {
-          echo "Sending unstable email to: ${RECIPIENTS}"
-          emailext (
-            subject: "Pipeline UNSTABLE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-            body: """
-            <h2>Pipeline Unstable!</h2>
-            <p><strong>Project:</strong> ${env.JOB_NAME}</p>
-            <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
-            <p><strong>Status:</strong> <span style="color: orange;">UNSTABLE</span></p>
-            <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-            
-            <h3>Links</h3>
-            <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
-            <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
-            
-            <p><strong>Action Required:</strong> Please review the build logs for warnings or issues.</p>
-            """,
-            to: "${RECIPIENTS}",
-            mimeType: 'text/html',
-            from: 'jenkins@automation-cicd.com'
-          )
-          echo "Unstable email sent"
-        } catch (Exception e) {
-          echo "Failed to send unstable email: ${e.getMessage()}"
         }
       }
     }
