@@ -8,38 +8,6 @@ pipeline {
     RECIPIENTS = 'kaushik.gopal95@gmail.com'
   }
   
-  def getCypressResults() {
-    try {
-      def resultsFile = readFile('cypress/results/results.json')
-      def results = readJSON text: resultsFile
-      return [
-        totalTests: results.stats.tests,
-        passed: results.stats.passes,
-        failed: results.stats.failures,
-        skipped: results.stats.pending,
-        duration: results.stats.duration
-      ]
-    } catch (Exception e) {
-      echo "Could not read Cypress results: ${e.getMessage()}"
-      return [totalTests: 0, passed: 0, failed: 0, skipped: 0, duration: 0]
-    }
-  }
-  
-  def getFailureReason() {
-    if (currentBuild.currentResult == 'FAILURE') {
-      if (env.STAGE_NAME == 'Run Cypress Tests on Staging') {
-        return "Cypress tests failed on staging environment"
-      } else if (env.STAGE_NAME == 'Promote to Main Branch') {
-        return "Failed to merge staging branch to main - Git push failed"
-      } else if (env.STAGE_NAME == 'Wait for Staging Deployment') {
-        return "Staging deployment health check failed or timed out"
-      } else if (env.STAGE_NAME == 'Wait for Production Deployment') {
-        return "Production deployment health check failed or timed out"
-      }
-    }
-    return "Unknown failure reason"
-  }
-  
   options {
     timeout(time: 30, unit: 'MINUTES')
     retry(1)
@@ -47,13 +15,6 @@ pipeline {
   }
   
   stages {
-    // stage('Deploy to Staging') {
-    //   steps {
-    //     bat 'curl -X POST -d {} "https://api.netlify.com/build_hooks/68b18e4052945d72b87627f4"'
-    //     echo "Netlify staging deployment triggered"
-    //   }
-    // }
-    
     stage('Wait for Staging Deployment') {
       steps {
         bat "echo Waiting for staging deployment at %STAGING_URL%"
@@ -65,9 +26,11 @@ pipeline {
     
     stage('Run Cypress Tests on Staging') {
       steps {
-        bat 'npm install'
-        bat "set CYPRESS_BASE_URL=%STAGING_URL% && npx cypress run --reporter json --reporter-options output=cypress/results/results.json"
-        echo "Build status after Cypress: ${currentBuild.currentResult}"
+        withCredentials([string(credentialsId: 'cypress-record-key', variable: 'CYPRESS_RECORD_KEY')]) {
+          bat 'npm install'
+          bat "set CYPRESS_BASE_URL=%STAGING_URL% && npx cypress run --record --key %CYPRESS_RECORD_KEY% --browser chrome"
+          echo "Cypress tests executed and recorded to Cypress Dashboard"
+        }
       }
       post {
         always {
@@ -104,7 +67,7 @@ pipeline {
             REM Set remote URL using PAT (x-access-token format)
 
             git remote set-url origin https://x-access-token:%GIT_TOKEN%@github.com/kaushikgopal95/automation-cicd.git
-            bat 'echo Remote URL: https://x-access-token:***@github.com/kaushikgopal95/automation-cicd.git'
+            echo "Remote URL configured"
 
             REM Rebase and merge staging into main
             git fetch origin main
@@ -154,8 +117,7 @@ pipeline {
     success {
       script {
         try {
-          echo "Attempting to send success email to: ${RECIPIENTS}"
-          def cypressResults = getCypressResults()
+          echo "Sending success email to: ${RECIPIENTS}"
           emailext (
             subject: "Pipeline SUCCESS - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
             body: """
@@ -164,15 +126,6 @@ pipeline {
             <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
             <p><strong>Status:</strong> <span style="color: green;">SUCCESS</span></p>
             <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-            
-            <h3>Test Results</h3>
-            <table border="1" style="border-collapse: collapse; margin: 10px 0;">
-              <tr><td><strong>Total Tests:</strong></td><td>${cypressResults.totalTests}</td></tr>
-              <tr><td><strong>Passed:</strong></td><td style="color: green;">${cypressResults.passed}</td></tr>
-              <tr><td><strong>Failed:</strong></td><td style="color: red;">${cypressResults.failed}</td></tr>
-              <tr><td><strong>Skipped:</strong></td><td style="color: orange;">${cypressResults.skipped}</td></tr>
-              <tr><td><strong>Test Duration:</strong></td><td>${cypressResults.duration}ms</td></tr>
-            </table>
             
             <h3>Deployment URLs</h3>
             <p><strong>Staging URL:</strong> <a href="${STAGING_URL}">${STAGING_URL}</a></p>
@@ -186,7 +139,7 @@ pipeline {
             mimeType: 'text/html',
             from: 'jenkins@automation-cicd.com'
           )
-          echo "Success email sent successfully"
+          echo "Success email sent"
         } catch (Exception e) {
           echo "Failed to send success email: ${e.getMessage()}"
         }
@@ -196,9 +149,7 @@ pipeline {
     failure {
       script {
         try {
-          echo "Attempting to send failure email to: ${RECIPIENTS}"
-          def cypressResults = getCypressResults()
-          def failureReason = getFailureReason()
+          echo "Sending failure email to: ${RECIPIENTS}"
           emailext (
             subject: "Pipeline FAILED - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
             body: """
@@ -207,18 +158,6 @@ pipeline {
             <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
             <p><strong>Status:</strong> <span style="color: red;">FAILED</span></p>
             <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-            
-            <h3>Failure Reason</h3>
-            <p style="color: red; font-weight: bold;">${failureReason}</p>
-            
-            <h3>Test Results</h3>
-            <table border="1" style="border-collapse: collapse; margin: 10px 0;">
-              <tr><td><strong>Total Tests:</strong></td><td>${cypressResults.totalTests}</td></tr>
-              <tr><td><strong>Passed:</strong></td><td style="color: green;">${cypressResults.passed}</td></tr>
-              <tr><td><strong>Failed:</strong></td><td style="color: red;">${cypressResults.failed}</td></tr>
-              <tr><td><strong>Skipped:</strong></td><td style="color: orange;">${cypressResults.skipped}</td></tr>
-              <tr><td><strong>Test Duration:</strong></td><td>${cypressResults.duration}ms</td></tr>
-            </table>
             
             <h3>Links</h3>
             <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
@@ -230,7 +169,7 @@ pipeline {
             mimeType: 'text/html',
             from: 'jenkins@automation-cicd.com'
           )
-          echo "Failure email sent successfully"
+          echo "Failure email sent"
         } catch (Exception e) {
           echo "Failed to send failure email: ${e.getMessage()}"
         }
@@ -240,8 +179,7 @@ pipeline {
     unstable {
       script {
         try {
-          echo "Attempting to send unstable email to: ${RECIPIENTS}"
-          def cypressResults = getCypressResults()
+          echo "Sending unstable email to: ${RECIPIENTS}"
           emailext (
             subject: "Pipeline UNSTABLE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
             body: """
@@ -250,15 +188,6 @@ pipeline {
             <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
             <p><strong>Status:</strong> <span style="color: orange;">UNSTABLE</span></p>
             <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-            
-            <h3>Test Results</h3>
-            <table border="1" style="border-collapse: collapse; margin: 10px 0;">
-              <tr><td><strong>Total Tests:</strong></td><td>${cypressResults.totalTests}</td></tr>
-              <tr><td><strong>Passed:</strong></td><td style="color: green;">${cypressResults.passed}</td></tr>
-              <tr><td><strong>Failed:</strong></td><td style="color: red;">${cypressResults.failed}</td></tr>
-              <tr><td><strong>Skipped:</strong></td><td style="color: orange;">${cypressResults.skipped}</td></tr>
-              <tr><td><strong>Test Duration:</strong></td><td>${cypressResults.duration}ms</td></tr>
-            </table>
             
             <h3>Links</h3>
             <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
@@ -270,7 +199,7 @@ pipeline {
             mimeType: 'text/html',
             from: 'jenkins@automation-cicd.com'
           )
-          echo "Unstable email sent successfully"
+          echo "Unstable email sent"
         } catch (Exception e) {
           echo "Failed to send unstable email: ${e.getMessage()}"
         }
