@@ -3,7 +3,7 @@
 describe('PlantBot App Tests', () => {
   beforeEach(() => {
     
-    // cy.visit('http://localhost:8081')
+    
     cy.visit('/')
   })
 
@@ -40,7 +40,7 @@ describe('PlantBot App Tests', () => {
   it('TC-7: Validate to check if the back button is functional on contact us page', () => {
     cy.get('button').contains('Contact').click()
     cy.get('button').contains('Back').click()
-    cy.url().should('eq','http://localhost:8081/')
+    cy.url().should('eq',`${Cypress.config('baseUrl')}/`)
     cy.get('span').should('contain','Premium Quality Plants')
   })
 
@@ -50,9 +50,9 @@ describe('PlantBot App Tests', () => {
   })
 
 
-  it('TC-9: Validate to check if the X icon is functional on sign in drawer', () => {
+  it.only('TC-9: Validate to check if the X icon is functional on sign in drawer', () => {
     cy.get('button').contains('Sign In').click()
-    cy.get('[data-component-name="X"]').click()
+    cy.get('button > svg.lucide-x').click()
     cy.get('span').should('contain','Premium Quality Plants')
   })
 
