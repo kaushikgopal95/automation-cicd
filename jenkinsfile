@@ -45,47 +45,16 @@ pipeline {
       }
     }
     
-    stage('Promote to Main Branch') {
+    stage('Create PR from Staging to Main') {
       when {
         expression { currentBuild.currentResult == 'SUCCESS' }
       }
       steps {
-        echo "Tests passed, promoting staging to main branch"
-        
-        withCredentials([string(credentialsId: 'github-credentials', variable: 'GIT_TOKEN')]) {
-          bat '''
-            echo "=== Using HTTPS with PAT to merge staging to main ==="
 
-            git config user.name "kaushikgopal95"
-            git config user.email "kaushikgopal95@users.noreply.github.com"
+        withCredentials([string(credentialsId: 'github-credentials', variable: 'GITHUB_TOKEN')]) {
+          bat """curl -X POST -H "Authorization: token %GITHUB_TOKEN%" -d "{\\"title\\":\\"Auto PR: Merge Staging into Main\\",\\"head\\":\\"staging\\",\\"base\\":\\"main\\"}" https://api.github.com/repos/kaushikgopal95/automation-cicd/pulls"""
 
-            REM Disable interactive prompts
-            git config --global credential.helper ""
-            set GIT_ASKPASS=echo
-
-
-            REM Set remote URL using PAT (x-access-token format)
-
-            git remote set-url origin https://x-access-token:%GIT_TOKEN%@github.com/kaushikgopal95/automation-cicd.git
-            echo "Remote URL configured"
-
-            REM Rebase and merge staging into main
-            git fetch origin main
-            git checkout main
-
-            git pull origin main --rebase || echo "Rebase skipped - proceeding with merge"
-            git merge origin/staging --no-edit
-
-            REM Push changes
-            git push origin main
-            if %ERRORLEVEL% neq 0 (
-              echo "Git push failed with error code: %ERRORLEVEL%"
-              exit /b 1
-            )
-          '''
         }
-        
-        echo "Successfully promoted staging branch to main"
       }
     }
     
