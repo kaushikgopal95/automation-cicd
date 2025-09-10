@@ -9,5 +9,6 @@ export default defineConfig({
     screenshotOnRunFailure: true,
     videosFolder: 'cypress/videos',
     screenshotsFolder: 'cypress/screenshots',
+    projectId: "hsi92h"
   },
 });

@@ -24,8 +24,7 @@ interface HeaderProps {
 
 const navigation = [
   { name: 'Shop', path: '#shop', scrollTo: 'featured-products' },
-  { name: 'Categories', path: '#categories', scrollTo: 'categories' },
-  { name: 'About', path: '#about', scrollTo: 'about' },
+  { name: 'About Us', path: '#about', scrollTo: 'about' },
   { name: 'Contact', path: '/contact' },
 ];
 
