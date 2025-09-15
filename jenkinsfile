@@ -1,3 +1,6 @@
+def cypressStats = ''
+def cypressDashboardUrl = ''
+
 pipeline {
     agent any
 
@@ -6,8 +9,6 @@ pipeline {
         PRODUCTION_URL = 'https://prod-plantbot.netlify.app/'
         BUILD_TIMESTAMP = "${new Date().format('yyyyMMdd-HHmmss')}"
         RECIPIENTS = 'kaushik.gopal95@gmail.com'
-        CYPRESS_STATS = ''
-        CYPRESS_DASHBOARD_URL = ''
     }
 
     options {
@@ -31,21 +32,18 @@ pipeline {
                 withCredentials([string(credentialsId: 'cypress-record-key', variable: 'CYPRESS_RECORD_KEY')]) {
                     bat 'npm install'
                     script {
-                        // Capture Cypress output to parse test results
                         def stagingUrl = env.STAGING_URL.trim()
                         def cypressOutput = bat(
                             script: "set CYPRESS_BASE_URL=${stagingUrl} && npx cypress run --record --key %CYPRESS_RECORD_KEY% --browser chrome",
                             returnStdout: true
                         ).trim()
                         
-                        // Parse test statistics from output
                         def totalTests = 0
                         def passedTests = 0
                         def failedTests = 0
                         def dashboardUrl = ""
                         
                         cypressOutput.split('\n').each { line ->
-                            // Look for test results pattern (e.g., "5 passing", "2 failing")
                             if (line.contains('passing')) {
                                 def matcher = line =~ /(\d+)\s+passing/
                                 if (matcher.find()) {
@@ -58,7 +56,6 @@ pipeline {
                                     failedTests = matcher[0][1] as Integer
                                 }
                             }
-                            // Look for dashboard URL
                             if (line.contains('https://dashboard.cypress.io/projects/')) {
                                 def matcher = line =~ /(https:\/\/dashboard\.cypress\.io\/projects\/[^\s]+)/
                                 if (matcher.find()) {
@@ -69,12 +66,11 @@ pipeline {
                         
                         totalTests = passedTests + failedTests
                         
-                        // Store results in environment variables
-                        env.CYPRESS_STATS = "Total: ${totalTests} | Passed: ${passedTests} | Failed: ${failedTests}"
-                        env.CYPRESS_DASHBOARD_URL = dashboardUrl ?: "Check Cypress Dashboard"
+                        cypressStats = "Total: ${totalTests} | Passed: ${passedTests} | Failed: ${failedTests}"
+                        cypressDashboardUrl = dashboardUrl ?: "Check Cypress Dashboard"
                         
-                        echo "Cypress Test Results: ${env.CYPRESS_STATS}"
-                        echo "Dashboard URL: ${env.CYPRESS_DASHBOARD_URL}"
+                        echo "Cypress Test Results: ${cypressStats}"
+                        echo "Dashboard URL: ${cypressDashboardUrl}"
                     }
                 }
             }
@@ -107,7 +103,7 @@ pipeline {
         always {
             echo "Pipeline completed with status: ${currentBuild.currentResult}"
             echo "Email recipients: ${RECIPIENTS}"
-            echo "Test Results: ${env.CYPRESS_STATS}"
+            echo "Test Results: ${cypressStats}"
         }
 
         success {
@@ -120,13 +116,14 @@ pipeline {
                         Pipeline completed successfully!
 
                         🧪 CYPRESS TEST RESULTS:
-                        ${env.CYPRESS_STATS}
+                        ${cypressStats}
+
+                        📊 View Detailed Test Results: ${cypressDashboardUrl}
                         
                         Staging deployment is done and Cypress tests passed.
                         PR has been created from staging → main. Please review and merge:
                         https://github.com/kaushikgopal95/automation-cicd/pulls
 
-                        📊 View Detailed Test Results: ${env.CYPRESS_DASHBOARD_URL}
                         🌐 Staging URL: ${STAGING_URL}
                         """,
                         to: "${RECIPIENTS}"
@@ -152,7 +149,8 @@ pipeline {
                         <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
 
                         <h3>Cypress Test Results</h3>
-                        ${env.CYPRESS_TEST_TABLE}
+                        <p>${cypressStats}</p>
+                        <p><a href="${cypressDashboardUrl}">View Dashboard</a></p>
 
                         <h3>Links</h3>
                         <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
@@ -184,8 +182,8 @@ pipeline {
                         <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
 
                         <h3>🧪 Cypress Test Results</h3>
-                        <p><strong>Results:</strong> ${env.CYPRESS_STATS}</p>
-                        <p><strong>Dashboard:</strong> <a href="${env.CYPRESS_DASHBOARD_URL}">View Detailed Results</a></p>
+                        <p>${cypressStats}</p>
+                        <p><a href="${cypressDashboardUrl}">View Dashboard</a></p>
 
                         <h3>Links</h3>
                         <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
