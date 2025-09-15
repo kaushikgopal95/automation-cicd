@@ -66,7 +66,7 @@ describe('PlantBot App Tests', () => {
     cy.get('h2').should('contain','Create an Account')
   })
 
-  it.only('TC-12: Validate to check if "back to sign in" redirects the user to sign in page', () => {
+  it('TC-12: Validate to check if "back to sign in" redirects the user to sign in page', () => {
     cy.get('button').contains('Get Started').click()
     cy.get('button').contains('Back to sign in').click()
     cy.get('h2').should('contain','Welcome Back')
