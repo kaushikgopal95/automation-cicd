@@ -6,6 +6,8 @@ pipeline {
         PRODUCTION_URL = 'https://prod-plantbot.netlify.app/'
         BUILD_TIMESTAMP = "${new Date().format('yyyyMMdd-HHmmss')}"
         RECIPIENTS = 'kaushik.gopal95@gmail.com'
+        CYPRESS_STATS = ''
+        CYPRESS_DASHBOARD_URL = ''
     }
 
     options {
@@ -28,8 +30,52 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'cypress-record-key', variable: 'CYPRESS_RECORD_KEY')]) {
                     bat 'npm install'
-                    bat "set CYPRESS_BASE_URL=%STAGING_URL:~0,-0% && npx cypress run --record --key %CYPRESS_RECORD_KEY% --browser chrome"
-                    echo "Cypress tests executed and recorded to Cypress Dashboard"
+                    script {
+                        // Capture Cypress output to parse test results
+                        def stagingUrl = env.STAGING_URL.trim()
+                        def cypressOutput = bat(
+                            script: "set CYPRESS_BASE_URL=${stagingUrl} && npx cypress run --record --key %CYPRESS_RECORD_KEY% --browser chrome",
+                            returnStdout: true
+                        ).trim()
+                        
+                        // Parse test statistics from output
+                        def totalTests = 0
+                        def passedTests = 0
+                        def failedTests = 0
+                        def dashboardUrl = ""
+                        
+                        cypressOutput.split('\n').each { line ->
+                            // Look for test results pattern (e.g., "5 passing", "2 failing")
+                            if (line.contains('passing')) {
+                                def matcher = line =~ /(\d+)\s+passing/
+                                if (matcher.find()) {
+                                    passedTests = matcher[0][1] as Integer
+                                }
+                            }
+                            if (line.contains('failing')) {
+                                def matcher = line =~ /(\d+)\s+failing/
+                                if (matcher.find()) {
+                                    failedTests = matcher[0][1] as Integer
+                                }
+                            }
+                            // Look for dashboard URL
+                            if (line.contains('https://dashboard.cypress.io/projects/')) {
+                                def matcher = line =~ /(https:\/\/dashboard\.cypress\.io\/projects\/[^\s]+)/
+                                if (matcher.find()) {
+                                    dashboardUrl = matcher[0][1]
+                                }
+                            }
+                        }
+                        
+                        totalTests = passedTests + failedTests
+                        
+                        // Store results in environment variables
+                        env.CYPRESS_STATS = "Total: ${totalTests} | Passed: ${passedTests} | Failed: ${failedTests}"
+                        env.CYPRESS_DASHBOARD_URL = dashboardUrl ?: "Check Cypress Dashboard"
+                        
+                        echo "Cypress Test Results: ${env.CYPRESS_STATS}"
+                        echo "Dashboard URL: ${env.CYPRESS_DASHBOARD_URL}"
+                    }
                 }
             }
             post {
@@ -61,7 +107,7 @@ pipeline {
         always {
             echo "Pipeline completed with status: ${currentBuild.currentResult}"
             echo "Email recipients: ${RECIPIENTS}"
-            echo "Build URL: ${env.BUILD_URL}"
+            echo "Test Results: ${env.CYPRESS_STATS}"
         }
 
         success {
@@ -73,12 +119,15 @@ pipeline {
                         body: """
                         Pipeline completed successfully!
 
+                        🧪 CYPRESS TEST RESULTS:
+                        ${env.CYPRESS_STATS}
+                        
                         Staging deployment is done and Cypress tests passed.
                         PR has been created from staging → main. Please review and merge:
                         https://github.com/kaushikgopal95/automation-cicd/pulls
 
-                        Staging URL: ${STAGING_URL}
-                        Build logs: ${env.BUILD_URL}
+                        📊 View Detailed Test Results: ${env.CYPRESS_DASHBOARD_URL}
+                        🌐 Staging URL: ${STAGING_URL}
                         """,
                         to: "${RECIPIENTS}"
                     )
@@ -102,11 +151,14 @@ pipeline {
                         <p><strong>Status:</strong> <span style="color: red;">FAILED</span></p>
                         <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
 
+                        <h3>Cypress Test Results</h3>
+                        <p><strong>Results:</strong> ${env.CYPRESS_STATS}</p>
+                        <p><strong>Dashboard:</strong> <a href="${env.CYPRESS_DASHBOARD_URL}">View Detailed Results</a></p>
+
                         <h3>Links</h3>
-                        <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
                         <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
 
-                        <p><strong>Action Required:</strong> Please check the build logs and fix the issues.</p>
+                        <p><strong>Action Required:</strong> Please check the test results and fix the failing tests.</p>
                         """,
                         to: "${RECIPIENTS}",
                         mimeType: 'text/html',
@@ -132,11 +184,14 @@ pipeline {
                         <p><strong>Status:</strong> <span style="color: orange;">UNSTABLE</span></p>
                         <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
 
+                        <h3>🧪 Cypress Test Results</h3>
+                        <p><strong>Results:</strong> ${env.CYPRESS_STATS}</p>
+                        <p><strong>Dashboard:</strong> <a href="${env.CYPRESS_DASHBOARD_URL}">View Detailed Results</a></p>
+
                         <h3>Links</h3>
-                        <p><strong>Build Console:</strong> <a href="${env.BUILD_URL}">View Build Logs</a></p>
                         <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
 
-                        <p><strong>Action Required:</strong> Please review the build logs for warnings or issues.</p>
+                        <p><strong>Action Required:</strong> Please review the test results for any issues.</p>
                         """,
                         to: "${RECIPIENTS}",
                         mimeType: 'text/html',
