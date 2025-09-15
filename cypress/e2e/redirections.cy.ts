@@ -66,9 +66,9 @@ describe('PlantBot App Tests', () => {
     cy.get('h2').should('contain','Create an Account')
   })
 
-  it('TC-12: Validate to check if "back to sign in" redirects the user to sign in page', () => {
+  it.only('TC-12: Validate to check if "back to sign in" redirects the user to sign in page', () => {
     cy.get('button').contains('Get Started').click()
-    cy.get('button').contains('Back to Sign In').click()
+    cy.get('button').contains('Back to sign in').click()
     cy.get('h2').should('contain','Welcome Back')
   })
 
@@ -137,7 +137,7 @@ describe('PlantBot App Tests', () => {
   })
   })
 
-  it.only('TC-20: Validate to check if entering a valid email and clicking on "Subscribe" button displays success message', () => {
+  it('TC-20: Validate to check if entering a valid email and clicking on "Subscribe" button displays success message', () => {
     cy.get('input[type="email"]').type('kaushik.leapus@gmail.com')
     cy.get('[data-testid="newsletter-submit"]').click()
     cy.get('[data-component-name="ToastTitle"]')
