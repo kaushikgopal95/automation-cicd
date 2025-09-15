@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        STAGING_URL = 'https://stag-plantbot.netlify.app/'
-        PRODUCTION_URL = 'https://prod-plantbot.netlify.app/'
+        STAGING_URL = 'https://stag-plantbot.netlify.app'
+        PRODUCTION_URL = 'https://prod-plantbot.netlify.app'
         BUILD_TIMESTAMP = "${new Date().format('yyyyMMdd-HHmmss')}"
         RECIPIENTS = 'kaushik.gopal95@gmail.com'
         CYPRESS_STATS = ''
