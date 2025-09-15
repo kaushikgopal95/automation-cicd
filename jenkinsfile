@@ -28,7 +28,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'cypress-record-key', variable: 'CYPRESS_RECORD_KEY')]) {
                     bat 'npm install'
-                    bat "set CYPRESS_BASE_URL=%STAGING_URL% && npx cypress run --record --key %CYPRESS_RECORD_KEY% --browser chrome"
+                    bat "set CYPRESS_BASE_URL=%STAGING_URL:~0,-0% && npx cypress run --record --key %CYPRESS_RECORD_KEY% --browser chrome"
                     echo "Cypress tests executed and recorded to Cypress Dashboard"
                 }
             }
