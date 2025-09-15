@@ -157,11 +157,27 @@ describe('PlantBot App Tests', () => {
   it('TC-20: Validate to check if entering a valid email and clicking on "Subscribe" button displays success message', () => {
     cy.get('input[type="email"]').type('kaushik.leapus@gmail.com')
     cy.get('[data-testid="newsletter-submit"]').click()
-    cy.get('[data-component-name="ToastTitle"]')
-      .should('be.visible')
-      .and('contain.text', 'Success!');
-    cy.get('[data-component-name="ToastDescription"]')
-      .should('be.visible')
-      .and('contain.text', 'Thank you for subscribing to our newsletter');
+    cy.get('body').then(($body) => {
+      if ($body.find('[data-component-name="ToastTitle"]').length) {
+        // Local environment
+        cy.get('[data-component-name="ToastTitle"]', { timeout: 5000 })
+          .should('be.visible')
+          .and('contain.text', 'Success!')
+        
+        cy.get('[data-component-name="ToastDescription"]', { timeout: 5000 })
+          .should('be.visible')
+          .and('contain.text', 'Thank you for subscribing to our newsletter')
+      }
+      else {
+      // Live environment fallback selectors
+      cy.get('.text-sm.font-semibold', { timeout: 5000 })
+        .should('be.visible')
+        .and('contain.text', 'Success!')
+
+      cy.get('.text-sm.opacity-90', { timeout: 5000 })
+        .should('be.visible')
+        .and('contain.text', 'Thank you for subscribing to our newsletter!')
+    }
   })
+})
 })
