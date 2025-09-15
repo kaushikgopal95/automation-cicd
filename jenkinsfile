@@ -152,8 +152,7 @@ pipeline {
                         <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
 
                         <h3>Cypress Test Results</h3>
-                        <p><strong>Results:</strong> ${env.CYPRESS_STATS}</p>
-                        <p><strong>Dashboard:</strong> <a href="${env.CYPRESS_DASHBOARD_URL}">View Detailed Results</a></p>
+                        ${env.CYPRESS_TEST_TABLE}
 
                         <h3>Links</h3>
                         <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
