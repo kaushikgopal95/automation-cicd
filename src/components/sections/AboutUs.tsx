@@ -56,28 +56,6 @@ export const AboutUs = () => {
           </div>
         </div>
 
-        <div className="text-center">
-          <h3 className="text-3xl font-bold mb-8">Meet Our Team</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {teamMembers.map((member, index) => (
-              <div key={index} className="bg-gray-900 rounded-lg p-6">
-                <div className="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden">
-                  <img 
-                    src={member.image} 
-                    alt={member.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop&crop=face';
-                    }}
-                  />
-                </div>
-                <h4 className="text-xl font-bold">{member.name}</h4>
-                <p className="text-green-400">{member.role}</p>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );
