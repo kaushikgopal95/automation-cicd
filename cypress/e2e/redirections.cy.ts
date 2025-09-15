@@ -40,7 +40,9 @@ describe('PlantBot App Tests', () => {
   it('TC-7: Validate to check if the back button is functional on contact us page', () => {
     cy.get('button').contains('Contact').click()
     cy.get('button').contains('Back').click()
-    cy.url().should('eq',`${Cypress.config('baseUrl')}/`)
+    const baseUrl = Cypress.config('baseUrl')
+    console.log('Base URL:', baseUrl)
+    cy.url().should('eq', `${baseUrl}/`)
     cy.get('span').should('contain','Premium Quality Plants')
   })
 
