@@ -37,11 +37,11 @@ describe('PlantBot App Tests', () => {
     cy.get('p').should('contain', '+91-8147325107')
   })
 
-  it.only('TC-7: Validate to check if the back button is functional on contact us page', () => {
+  it('TC-7: Validate to check if the back button is functional on contact us page', () => {
     cy.get('button').contains('Contact').click()
     cy.get('button').contains('Back').click()
     const baseUrl = Cypress.config('baseUrl').trim()
-    console.log('Base URL:', baseUrl)
+    // console.log('Base URL:', baseUrl)
     cy.url().should('eq', `${baseUrl}`)
     cy.get('span').should('contain', 'Premium Quality Plants')
   })
@@ -102,7 +102,9 @@ describe('PlantBot App Tests', () => {
     cy.get('button[type="submit"]').contains('Search').click();
     cy.contains('p', 'Found 1 result for "Snake Plant"')
     cy.get('[data-testid="logo"]').click()
-    cy.url().should('eq', `${Cypress.config('baseUrl')}`)
+    const baseUrl = Cypress.config('baseUrl').trim()
+    // console.log('Base URL:', baseUrl)
+    cy.url().should('eq', `${baseUrl}`)
     cy.contains('p', 'Handpicked favorites that bring life and beauty to your space')
   })
 
