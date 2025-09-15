@@ -87,15 +87,19 @@ pipeline {
             }
         }
 
-        stage('Create PR from Staging to Main') {
-            when {
-                expression { currentBuild.currentResult == 'SUCCESS' }
-            }
-            steps {
-                withCredentials([string(credentialsId: 'github-credentials', variable: 'GITHUB_TOKEN')]) {
-                    bat """curl -X POST -H "Authorization: token %GITHUB_TOKEN%" -d "{\\"title\\":\\"Auto PR: Merge Staging into Main\\",\\"head\\":\\"staging\\",\\"base\\":\\"main\\"}" https://api.github.com/repos/kaushikgopal95/automation-cicd/pulls"""
-                }
-            }
+      }
+    }
+    
+    stage('Create PR from Staging to Main') {
+      when {
+        expression { currentBuild.currentResult == 'SUCCESS' }
+      }
+      steps {
+
+        withCredentials([string(credentialsId: 'github-credentials', variable: 'GITHUB_TOKEN')]) {
+          bat """curl -X POST -H "Authorization: token %GITHUB_TOKEN%" -d "{\\"title\\":\\"Auto PR: Merge Staging into Main\\",\\"head\\":\\"staging\\",\\"base\\":\\"main\\"}" https://api.github.com/repos/kaushikgopal95/automation-cicd/pulls"""
+
+
         }
     }
 
