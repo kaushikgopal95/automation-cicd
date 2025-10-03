@@ -103,13 +103,9 @@ pipeline {
             emailext (
                 subject: "Pipeline SUCCESS - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
-                Pipeline completed successfully!
+                Pipeline completed successfully!                
 
-                🧪 CYPRESS TEST RESULTS:
-                ${env.CYPRESS_STATS}
-
-                📊 View Detailed Test Results: ${env.CYPRESS_DASHBOARD_URL}
-                
+ 
                 PR has been created from staging → main. Please review and merge:
                 https://github.com/kaushikgopal95/automation-cicd/pulls
 
@@ -129,9 +125,7 @@ pipeline {
                 <p><strong>Status:</strong> <span style="color: red;">FAILED</span></p>
                 <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
 
-                <h3>Cypress Test Results</h3>
-                ${env.CYPRESS_STATS}
-
+            
                 <h3>Links</h3>
                 <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
 
@@ -151,10 +145,7 @@ pipeline {
                 <p><strong>Status:</strong> <span style="color: orange;">UNSTABLE</span></p>
                 <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
 
-                <h3>🧪 Cypress Test Results</h3>
-                <p>${env.CYPRESS_STATS}</p>
-                <p><a href="${env.CYPRESS_DASHBOARD_URL}">View Dashboard</a></p>
-
+            
                 <h3>Links</h3>
                 <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
 
