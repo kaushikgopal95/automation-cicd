@@ -482,7 +482,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className={cn("space-y-6", className)}>
+    <form onSubmit={handleSubmit} noValidate className={cn("space-y-6", className)}>
       {renderSignupFields()}
 
       <FormInput
@@ -493,7 +493,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
         value={formData.email}
         onChange={(e) => handleChange('email', e.target.value)}
         placeholder="you@example.com"
-        error={errors.email}
+        error={mode === 'signup' ? errors.email : undefined}
         required
         autoFocus={mode === 'signup'}
       />
