@@ -68,6 +68,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({
       }
       if (!formData.phone?.trim()) {
         newErrors.phone = 'Phone number is required';
+      } else if (!/^[0-9]{10}$/.test(formData.phone)) {
+        newErrors.phone = 'Phone number must be exactly 10 digits';
       }
       if (!formData.userType) {
         newErrors.userType = 'Please select a user type';
@@ -392,10 +394,16 @@ export const AuthForm: React.FC<AuthFormProps> = ({
           name="phone"
           type="tel"
           value={formData.phone}
-          onChange={(e) => handleChange('phone', e.target.value)}
-          placeholder="+1 (555) 000-0000"
+          onChange={(e) => {
+            // Only allow numbers and max 10 digits
+            const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+            handleChange('phone', value);
+          }}
+          placeholder="Enter 10 digit number"
           error={errors.phone}
           required
+          maxLength={10}
+          pattern="[0-9]{10}"
         />
 
         <div className="space-y-3">
