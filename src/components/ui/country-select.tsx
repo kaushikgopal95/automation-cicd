@@ -69,7 +69,7 @@ export function CountrySelect({ value, onChange, className }: CountrySelectProps
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0" ref={popoverRef}>
+      <PopoverContent className="w-[300px] p-0 max-h-80 overflow-y-auto" ref={popoverRef}>
         <Command shouldFilter={false}>
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
