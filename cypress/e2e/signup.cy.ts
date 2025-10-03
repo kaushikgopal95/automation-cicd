@@ -49,17 +49,36 @@ cy.get('input[name="phone"]').then(($input) => {
   });
 })
 
-it.only('TC-26: Validate to check if user can select a country from the dropdown during sign up', () => {
+it('TC-26: Validate to check if user can select a country from the dropdown during sign up', () => {
 cy.get('[data-testid="get-started-btn"]').click()
 cy.get('input[name="fullName"]').type('John Paul')
 cy.get('select').select('Business')
 cy.get('input[name="phone"]').type('1234567890')
 cy.get('button[role="combobox"]').click();
-cy.contains('Canada').click();
+cy.get('input[placeholder="Search countries..."]').should('be.visible').type('Canada{enter}');
+// cy.contains('Canada').click();
 cy.get('button[role="combobox"]').should('contain.text', 'Canada');
 })
 
+it('TC-27: Validate to check if user can enter blank email sign up', () => {
+cy.get('[data-testid="get-started-btn"]').click()
+cy.get('input[name="fullName"]').type('John Paul')
+cy.get('select').select('Business')
+cy.get('input[name="phone"]').type('1234567890')
+cy.get('button[role="combobox"]').click();
+cy.get('input[placeholder="Search countries..."]').should('be.visible').type('Canada{enter}');
+cy.get('button[type="submit"]').contains('Create Account').click()
+cy.get('input[name="email"]').should('have.attr', 'required');
+})
 
-
-
+it('TC-28: Validate to check if user can enter invalid email during sign up', () => {
+cy.get('[data-testid="get-started-btn"]').click()
+cy.get('input[name="fullName"]').type('John Paul')
+cy.get('select').select('Business')
+cy.get('input[name="phone"]').type('1234567890')
+cy.get('button[role="combobox"]').click();
+cy.get('input[placeholder="Search countries..."]').should('be.visible').type('Canada{enter}');
+cy.get('input[name="email"]').type('invalidemail')
+cy.get('button[type="submit"]').contains('Create Account').click()
+})
 })

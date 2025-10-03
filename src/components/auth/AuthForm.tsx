@@ -488,12 +488,14 @@ export const AuthForm: React.FC<AuthFormProps> = ({
       <FormInput
         label="Email"
         name="email"
-        type="email"
+        type="text"
+        autoComplete="off"
         value={formData.email}
         onChange={(e) => handleChange('email', e.target.value)}
         placeholder="you@example.com"
         error={errors.email}
         required
+        autoFocus={mode === 'signup'}
       />
 
       {mode !== 'forgot-password' && (
