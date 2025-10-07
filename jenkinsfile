@@ -1,6 +1,3 @@
-def cypressStats = ''
-def cypressDashboardUrl = ''
-
 pipeline {
     agent any
 
@@ -9,6 +6,8 @@ pipeline {
         PRODUCTION_URL = 'https://prod-plantbot.netlify.app/'
         BUILD_TIMESTAMP = "${new Date().format('yyyyMMdd-HHmmss')}"
         RECIPIENTS = 'kaushik.gopal95@gmail.com'
+        CYPRESS_STATS = ''
+        CYPRESS_DASHBOARD_URL = ''
     }
 
     options {
@@ -42,7 +41,7 @@ pipeline {
                         def passedTests = 0
                         def failedTests = 0
                         def dashboardUrl = ""
-                        
+
                         cypressOutput.split('\n').each { line ->
                             if (line.contains('passing')) {
                                 def matcher = line =~ /(\d+)\s+passing/
@@ -63,26 +62,20 @@ pipeline {
                                 }
                             }
                         }
-                        
+
                         totalTests = passedTests + failedTests
-                        
-                        cypressStats = "Total: ${totalTests} | Passed: ${passedTests} | Failed: ${failedTests}"
-                        cypressDashboardUrl = dashboardUrl ?: "Check Cypress Dashboard"
-                        
-                        echo "Cypress Test Results: ${cypressStats}"
-                        echo "Dashboard URL: ${cypressDashboardUrl}"
+
+                        env.CYPRESS_STATS = "Total: ${totalTests} | Passed: ${passedTests} | Failed: ${failedTests}"
+                        env.CYPRESS_DASHBOARD_URL = dashboardUrl ?: "Check Cypress Dashboard"
+
+                        echo "Cypress Test Results: ${env.CYPRESS_STATS}"
+                        echo "Dashboard URL: ${env.CYPRESS_DASHBOARD_URL}"
                     }
                 }
             }
             post {
                 always {
-                    script {
-                        try {
-                            archiveArtifacts artifacts: 'cypress/videos/**/*,cypress/screenshots/**/*,cypress/results/**/*', allowEmptyArchive: true
-                        } catch (Exception e) {
-                            echo "No Cypress artifacts found: ${e.getMessage()}"
-                        }
-                    }
+                    archiveArtifacts artifacts: 'cypress/videos/**/*,cypress/screenshots/**/*,cypress/results/**/*', allowEmptyArchive: true
                 }
             }
         }
@@ -107,102 +100,63 @@ pipeline {
         always {
             echo "Pipeline completed with status: ${currentBuild.currentResult}"
             echo "Email recipients: ${RECIPIENTS}"
-            echo "Test Results: ${cypressStats}"
+            echo "Test Results: ${env.CYPRESS_STATS}"
         }
 
         success {
-            script {
-                try {
-                    echo "Sending success email to: ${RECIPIENTS}"
-                    emailext (
-                        subject: "Pipeline SUCCESS - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                        body: """
-                        Pipeline completed successfully!
+            emailext (
+                subject: "Pipeline SUCCESS - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                Pipeline completed successfully!                
 
-                        🧪 CYPRESS TEST RESULTS:
-                        ${cypressStats}
+ 
+                PR has been created from staging → main. Please review and merge:
+                https://github.com/kaushikgopal95/automation-cicd/pulls
 
-                        📊 View Detailed Test Results: ${cypressDashboardUrl}
-                        
-                        Staging deployment is done and Cypress tests passed.
-                        PR has been created from staging → main. Please review and merge:
-                        https://github.com/kaushikgopal95/automation-cicd/pulls
-
-                        🌐 Staging URL: ${STAGING_URL}
-                        """,
-                        to: "${RECIPIENTS}"
-                    )
-                    echo "Success email sent"
-                } catch (Exception e) {
-                    echo "Failed to send success email: ${e.getMessage()}"
-                }
-            }
+                🌐 Staging URL: ${STAGING_URL}
+                """,
+                to: "${RECIPIENTS}"
+            )
         }
 
         failure {
-            script {
-                try {
-                    echo "Sending failure email to: ${RECIPIENTS}"
-                    emailext (
-                        subject: "Pipeline FAILED - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                        body: """
-                        <h2>Pipeline Failed!</h2>
-                        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
-                        <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
-                        <p><strong>Status:</strong> <span style="color: red;">FAILED</span></p>
-                        <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+            emailext (
+                subject: "Pipeline FAILED - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                <h2>Pipeline Failed!</h2>
+                <p><strong>Project:</strong> ${env.JOB_NAME}</p>
+                <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
+                <p><strong>Status:</strong> <span style="color: red;">FAILED</span></p>
+                <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
 
-                        <h3>Cypress Test Results</h3>
-                        <p>${cypressStats}</p>
-                        <p><a href="${cypressDashboardUrl}">View Dashboard</a></p>
+            
+                <h3>Links</h3>
+                <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
 
-                        <h3>Links</h3>
-                        <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
-
-                        <p><strong>Action Required:</strong> Please check the test results and fix the failing tests.</p>
-                        """,
-                        to: "${RECIPIENTS}",
-                        mimeType: 'text/html',
-                        from: 'jenkins@automation-cicd.com'
-                    )
-                    echo "Failure email sent"
-                } catch (Exception e) {
-                    echo "Failed to send failure email: ${e.getMessage()}"
-                }
-            }
+                <p><strong>Action Required:</strong> Please check the test results and fix the failing tests.</p>
+                """,
+                to: "${RECIPIENTS}"
+            )
         }
 
         unstable {
-            script {
-                try {
-                    echo "Sending unstable email to: ${RECIPIENTS}"
-                    emailext (
-                        subject: "Pipeline UNSTABLE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                        body: """
-                        <h2>Pipeline Unstable!</h2>
-                        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
-                        <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
-                        <p><strong>Status:</strong> <span style="color: orange;">UNSTABLE</span></p>
-                        <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+            emailext (
+                subject: "Pipeline UNSTABLE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                <h2>Pipeline Unstable!</h2>
+                <p><strong>Project:</strong> ${env.JOB_NAME}</p>
+                <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
+                <p><strong>Status:</strong> <span style="color: orange;">UNSTABLE</span></p>
+                <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
 
-                        <h3>🧪 Cypress Test Results</h3>
-                        <p>${cypressStats}</p>
-                        <p><a href="${cypressDashboardUrl}">View Dashboard</a></p>
+            
+                <h3>Links</h3>
+                <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
 
-                        <h3>Links</h3>
-                        <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
-
-                        <p><strong>Action Required:</strong> Please review the test results for any issues.</p>
-                        """,
-                        to: "${RECIPIENTS}",
-                        mimeType: 'text/html',
-                        from: 'jenkins@automation-cicd.com'
-                    )
-                    echo "Unstable email sent"
-                } catch (Exception e) {
-                    echo "Failed to send unstable email: ${e.getMessage()}"
-                }
-            }
+                <p><strong>Action Required:</strong> Please review the test results for any issues.</p>
+                """,
+                to: "${RECIPIENTS}"
+            )
         }
     }
 }
