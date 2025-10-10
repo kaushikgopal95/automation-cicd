@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-describe('PlantBot App Tests', () => {
+describe('PlantBot redirection Test cases', () => {
   beforeEach(() => {
 
 

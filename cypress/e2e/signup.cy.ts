@@ -9,7 +9,7 @@ declare global {
   }
 }
 
-describe('PlantBot App Tests', () => {
+describe('PlantBot sign up Test cases', () => {
   beforeEach(() => {
 
 
