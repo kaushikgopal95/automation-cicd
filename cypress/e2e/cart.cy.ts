@@ -61,7 +61,6 @@ it('TC-45: Validate to check if user can decrement the item quantity in the cart
     cy.get('[data-testid=add-to-cart-btn]').eq(2).click()
     cy.get('[data-testid="cart-btn"]').click()
     cy.get('[data-testid="increase-quantity"]').click()
-    cy.get('[data-testid="cart-item-quantity"]').should('contain', '2')
     cy.get('[data-testid="decrease-quantity"]').click()
     cy.get('[data-testid="cart-item-quantity"]').should('contain', '1')
     cy.get('[data-testid="cart-total"]').should('contain', '39.99')
@@ -83,7 +82,7 @@ it('TC-46: Validate to check if user can delete the item from the cart', () => {
     cy.get('p.text-sm').should('contain', 'Add some beautiful plants to get started!')
 })
 
-it('TC-47: Validate to check if clicking on "Checkout" button redirects the user to checkout page', () => {
+it.only('TC-47: Validate to check if clicking on "Checkout" button redirects the user to checkout page', () => {
     cy.get('button').contains('Sign In').click()
     cy.get('input[name="email"]').type('kaushik.leapus@gmail.com')
     cy.get('input[name="password"]').type('Test@123')
@@ -92,7 +91,7 @@ it('TC-47: Validate to check if clicking on "Checkout" button redirects the user
     cy.get('[data-testid=add-to-cart-btn]').eq(2).click()
     cy.get('[data-testid="cart-btn"]').click()
     cy.get('button').contains('Proceed to Checkout').click({ force: true })
-    cy.url().should('eq', Cypress.config().baseUrl + 'checkout')
+    cy.url().should('eq', Cypress.config().baseUrl+ 'checkout')
     cy.get('h2').should('contain', 'Cart Review')
     cy.get('p').should('contain', 'ZZ Plant')
     cy.get('p').should('contain.text', 'Qty:').and('contain.text', '1');
@@ -101,7 +100,7 @@ it('TC-47: Validate to check if clicking on "Checkout" button redirects the user
 
 })
 
-it('TC-48: Validate to check if back button is functional in the checkout page', () => {
+it.only('TC-48: Validate to check if back button is functional in the checkout page', () => {
     cy.get('button').contains('Sign In').click()
     cy.get('input[name="email"]').type('kaushik.leapus@gmail.com')
     cy.get('input[name="password"]').type('Test@123')

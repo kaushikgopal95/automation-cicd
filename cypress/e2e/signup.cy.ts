@@ -219,7 +219,7 @@ cy.get('[data-testid="cart-btn"]').click()
 cy.get('p').should('contain', 'Add some beautiful plants to get started!')
 })
 
-it.only('TC-39: Validate to check if user can logout successfully', () => {
+it('TC-39: Validate to check if user can logout successfully', () => {
 cy.get('button').contains('Sign In').click()
 cy.get('input[name="email"]').type('kaushik.leapus@gmail.com')
 cy.get('input[name="password"]').type('Test@123')
@@ -230,7 +230,7 @@ cy.contains('button', 'Shop Now')
 
 })
 
-it.only('TC-40: Validate to check if user is redirected to shopping section on clicking "Shop Now" button from hero section', () => {
+it('TC-40: Validate to check if user is redirected to shopping section on clicking "Shop Now" button from hero section', () => {
 cy.get('button').contains('Sign In').click()
 cy.get('input[name="email"]').type('kaushik.leapus@gmail.com')
 cy.get('input[name="password"]').type('Test@123')

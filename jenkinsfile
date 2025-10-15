@@ -6,8 +6,7 @@ pipeline {
         PRODUCTION_URL = 'https://prod-plantbot.netlify.app/'
         BUILD_TIMESTAMP = "${new Date().format('yyyyMMdd-HHmmss')}"
         RECIPIENTS = 'kaushik.gopal95@gmail.com'
-        CYPRESS_STATS = ''
-        CYPRESS_DASHBOARD_URL = ''
+        
     }
 
     options {
@@ -19,9 +18,12 @@ pipeline {
     stages {
         stage('Wait for Staging Deployment') {
             steps {
-                bat "echo Waiting for staging deployment at %STAGING_URL%"
-                bat "node scripts/wait-for-healthy.js %STAGING_URL% 60"
-                bat "curl -I %STAGING_URL%"
+                script {
+                    def stagingUrl = env.STAGING_URL.trim()
+                    bat "echo Waiting for staging deployment at ${stagingUrl}"
+                    bat "node scripts/wait-for-healthy.js ${stagingUrl} 60"
+                    bat "curl -I ${stagingUrl}"
+                }
                 echo "Staging deployment completed and healthy"
             }
         }
@@ -115,25 +117,22 @@ pipeline {
             )
         }
 
-        failure {
-            emailext (
-                subject: "Pipeline FAILED - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: """
-                <h2>Pipeline Failed!</h2>
-                <p><strong>Project:</strong> ${env.JOB_NAME}</p>
-                <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
-                <p><strong>Status:</strong> <span style="color: red;">FAILED</span></p>
-                <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-
-            
-                <h3>Links</h3>
-                <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
-
-                <p><strong>Action Required:</strong> Please check the test results and fix the failing tests.</p>
-                """,
-                to: "${RECIPIENTS}"
-            )
-        }
+                failure {
+                    emailext (
+                        subject: "Pipeline FAILED - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                        body: """
+        <h2>Pipeline Failed!</h2>
+        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
+        <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
+        <p><strong>Status:</strong> <span style="color: red;">FAILED</span></p>
+        <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+        <h3>Links</h3>
+        <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
+        <p><strong>Action Required:</strong> Please check the test results and fix the failing tests.</p>
+        """,
+                        to: "${RECIPIENTS}"
+                    )
+                }
 
         unstable {
             emailext (
