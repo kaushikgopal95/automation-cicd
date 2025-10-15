@@ -35,7 +35,7 @@ pipeline {
                     script {
                         def stagingUrl = env.STAGING_URL.trim()
                         def cypressOutput = bat(
-                            script: "set CYPRESS_BASE_URL=${stagingUrl} && npx cypress run --record --key %CYPRESS_RECORD_KEY% --browser chrome",
+                            script: "set CYPRESS_BASE_URL=${stagingUrl}&& npx cypress run --record --key %CYPRESS_RECORD_KEY% --browser chrome",
                             returnStdout: true
                         ).trim()
                         
