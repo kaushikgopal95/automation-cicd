@@ -6,8 +6,6 @@ pipeline {
         PRODUCTION_URL = 'https://prod-plantbot.netlify.app/'
         BUILD_TIMESTAMP = "${new Date().format('yyyyMMdd-HHmmss')}"
         RECIPIENTS = 'kaushik.gopal95@gmail.com'
-        CYPRESS_STATS = ''
-        CYPRESS_DASHBOARD_URL = ''
     }
 
     options {
@@ -19,9 +17,12 @@ pipeline {
     stages {
         stage('Wait for Staging Deployment') {
             steps {
-                bat "echo Waiting for staging deployment at %STAGING_URL%"
-                bat "node scripts/wait-for-healthy.js %STAGING_URL% 60"
-                bat "curl -I %STAGING_URL%"
+                script {
+                    def stagingUrl = env.STAGING_URL.trim()
+                    bat "echo Waiting for staging deployment at ${stagingUrl}"
+                    bat "node scripts/wait-for-healthy.js ${stagingUrl} 60"
+                    bat "curl -I ${stagingUrl}"
+                }
                 echo "Staging deployment completed and healthy"
             }
         }
@@ -33,10 +34,10 @@ pipeline {
                     script {
                         def stagingUrl = env.STAGING_URL.trim()
                         def cypressOutput = bat(
-                            script: "set CYPRESS_BASE_URL=${stagingUrl} && npx cypress run --record --key %CYPRESS_RECORD_KEY% --browser chrome",
+                            script: "set CYPRESS_BASE_URL=${stagingUrl}&& npx cypress.run --record --key %CYPRESS_RECORD_KEY% --browser chrome",
                             returnStdout: true
                         ).trim()
-                        
+
                         def totalTests = 0
                         def passedTests = 0
                         def failedTests = 0
@@ -106,14 +107,12 @@ pipeline {
         success {
             emailext (
                 subject: "Pipeline SUCCESS - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                mimeType: 'text/html',
                 body: """
-                Pipeline completed successfully!                
-
- 
-                PR has been created from staging → main. Please review and merge:
-                https://github.com/kaushikgopal95/automation-cicd/pulls
-
-                🌐 Staging URL: ${STAGING_URL}
+                <h2>Pipeline Successful!</h2>
+                <p>PR has been created from <strong>staging → main</strong>.</p>
+                <p><a href="https://github.com/kaushikgopal95/automation-cicd/pulls">Review Pull Requests</a></p>
+                <p><strong>Staging URL:</strong> ${STAGING_URL}</p>
                 """,
                 to: "${RECIPIENTS}"
             )
@@ -122,18 +121,16 @@ pipeline {
         failure {
             emailext (
                 subject: "Pipeline FAILED - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                mimeType: 'text/html',
                 body: """
                 <h2>Pipeline Failed!</h2>
                 <p><strong>Project:</strong> ${env.JOB_NAME}</p>
                 <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
                 <p><strong>Status:</strong> <span style="color: red;">FAILED</span></p>
                 <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-
-            
-                <h3>Links</h3>
-                <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
-
-                <p><strong>Action Required:</strong> Please check the test results and fix the failing tests.</p>
+                <h3>Action Required</h3>
+                <p>Please check failing Cypress tests and logs.</p>
+                <p><a href="https://github.com/kaushikgopal95/automation-cicd">GitHub Repository</a></p>
                 """,
                 to: "${RECIPIENTS}"
             )
@@ -142,18 +139,15 @@ pipeline {
         unstable {
             emailext (
                 subject: "Pipeline UNSTABLE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                mimeType: 'text/html',
                 body: """
                 <h2>Pipeline Unstable!</h2>
                 <p><strong>Project:</strong> ${env.JOB_NAME}</p>
                 <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
                 <p><strong>Status:</strong> <span style="color: orange;">UNSTABLE</span></p>
                 <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-
-            
-                <h3>Links</h3>
-                <p><strong>GitHub Repository:</strong> <a href="https://github.com/kaushikgopal95/automation-cicd">View Repository</a></p>
-
-                <p><strong>Action Required:</strong> Please review the test results for any issues.</p>
+                <p>Please review flaky or failed tests.</p>
+                <p><a href="https://github.com/kaushikgopal95/automation-cicd">GitHub Repository</a></p>
                 """,
                 to: "${RECIPIENTS}"
             )
