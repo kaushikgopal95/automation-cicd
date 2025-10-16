@@ -82,7 +82,7 @@ it('TC-46: Validate to check if user can delete the item from the cart', () => {
     cy.get('p.text-sm').should('contain', 'Add some beautiful plants to get started!')
 })
 
-it.only('TC-47: Validate to check if clicking on "Checkout" button redirects the user to checkout page', () => {
+it('TC-47: Validate to check if clicking on "Checkout" button redirects the user to checkout page', () => {
     cy.get('button').contains('Sign In').click()
     cy.get('input[name="email"]').type('kaushik.leapus@gmail.com')
     cy.get('input[name="password"]').type('Test@123')
@@ -100,7 +100,7 @@ it.only('TC-47: Validate to check if clicking on "Checkout" button redirects the
 
 })
 
-it.only('TC-48: Validate to check if back button is functional in the checkout page', () => {
+it('TC-48: Validate to check if back button is functional in the checkout page', () => {
     cy.get('button').contains('Sign In').click()
     cy.get('input[name="email"]').type('kaushik.leapus@gmail.com')
     cy.get('input[name="password"]').type('Test@123')
@@ -144,5 +144,111 @@ it('TC-50: Validate to check if back button from address section is functional',
     cy.get('h2').should('contain', 'Cart Review')
     cy.contains('Continue to Address').should('be.enabled')
 
+})
+
+it('TC-51: Validate to check if user can move to payment page without adding details on address section', () => {
+    cy.get('button').contains('Sign In').click()
+    cy.get('input[name="email"]').type('kaushik.leapus@gmail.com')
+    cy.get('input[name="password"]').type('Test@123')
+    cy.get('button[type="submit"]').contains('Sign In').click()
+    cy.contains('button', 'Shop Now').click();
+    cy.get('[data-testid=add-to-cart-btn]').eq(2).click()
+    cy.get('[data-testid="cart-btn"]').click()
+    cy.get('button').contains('Proceed to Checkout').click({ force: true })
+    cy.contains('Continue to Address').should('be.enabled').click()
+    cy.get('button').contains('Continue to Payment').click()
+    cy.get('div').should('contain', 'Missing Information')
+})
+
+it('TC-52: Validate to check if user can move to payment page after adding details on address section', () => {
+    cy.get('button').contains('Sign In').click()
+    cy.get('input[name="email"]').type('kaushik.leapus@gmail.com')
+    cy.get('input[name="password"]').type('Test@123')
+    cy.get('button[type="submit"]').contains('Sign In').click()
+    cy.contains('button', 'Shop Now').click();
+    cy.get('[data-testid=add-to-cart-btn]').eq(2).click()
+    cy.get('[data-testid="cart-btn"]').click()
+    cy.get('button').contains('Proceed to Checkout').click({ force: true })
+    cy.contains('Continue to Address').should('be.enabled').click()
+    cy.get('button').contains('Continue to Payment').click()
+    cy.get('#street').type('123 Main St')
+    cy.get('#city').type('Bangalore')
+    cy.get('#state').type('Karnataka')
+    cy.get('#postal_code').type('560001')
+    cy.get('#country').type('India')
+    cy.contains('Continue to Payment').click()
+    cy.get('h3').should('contain', 'Payment Method')
+    cy.get('p').should('contain', "Choose how you'd like to pay")
+    cy.get('button').contains('Continue to Review').should('be.enabled')
+})
+
+it('TC-53: Validate to check if back button is functional from the payments page', () => {
+    cy.get('button').contains('Sign In').click()
+    cy.get('input[name="email"]').type('kaushik.leapus@gmail.com')
+    cy.get('input[name="password"]').type('Test@123')
+    cy.get('button[type="submit"]').contains('Sign In').click()
+    cy.contains('button', 'Shop Now').click();
+    cy.get('[data-testid=add-to-cart-btn]').eq(2).click()
+    cy.get('[data-testid="cart-btn"]').click()
+    cy.get('button').contains('Proceed to Checkout').click({ force: true })
+    cy.contains('Continue to Address').should('be.enabled').click()
+    cy.get('button').contains('Continue to Payment').click()
+    cy.get('#street').type('123 Main St')
+    cy.get('#city').type('Bangalore')
+    cy.get('#state').type('Karnataka')
+    cy.get('#postal_code').type('560001')
+    cy.get('#country').type('India')
+    cy.contains('Continue to Payment').click()
+    cy.get('.gap-3 > .border').click()
+    cy.get('h3').should('contain', 'Shipping Address')
+    cy.contains('Continue to Payment').should('be.enabled')
+})
+
+it('TC-54: Validate to check if user can move to review page by selecting credit card on payment section', () => {
+    cy.get('button').contains('Sign In').click()
+    cy.get('input[name="email"]').type('kaushik.leapus@gmail.com')
+    cy.get('input[name="password"]').type('Test@123')
+    cy.get('button[type="submit"]').contains('Sign In').click()
+    cy.contains('button', 'Shop Now').click();
+    cy.get('[data-testid=add-to-cart-btn]').eq(2).click()
+    cy.get('[data-testid="cart-btn"]').click()
+    cy.get('button').contains('Proceed to Checkout').click({ force: true })
+    cy.contains('Continue to Address').should('be.enabled').click()
+    cy.get('button').contains('Continue to Payment').click()
+    cy.get('#street').type('123 Main St')
+    cy.get('#city').type('Bangalore')
+    cy.get('#state').type('Karnataka')
+    cy.get('#postal_code').type('560001')
+    cy.get('#country').type('India')
+    cy.contains('Continue to Payment').click()
+    cy.get('input[type="radio"][value="paypal"]').check({ force: true })
+    cy.get('input[type="radio"][value="card"]').check({ force: true })
+    cy.get('button').contains('Continue to Review').click()
+    cy.get('h3').should('contain', 'Order Review')
+    cy.get('h4').should('contain', 'Shipping Address')
+
+})
+
+it('TC-55: Validate to check if back button is functional from the review page', () => {
+    cy.get('button').contains('Sign In').click()
+    cy.get('input[name="email"]').type('kaushik.leapus@gmail.com')
+    cy.get('input[name="password"]').type('Test@123')
+    cy.get('button[type="submit"]').contains('Sign In').click()
+    cy.contains('button', 'Shop Now').click();
+    cy.get('[data-testid=add-to-cart-btn]').eq(2).click()
+    cy.get('[data-testid="cart-btn"]').click()
+    cy.get('button').contains('Proceed to Checkout').click({ force: true })
+    cy.contains('Continue to Address').should('be.enabled').click()
+    cy.get('button').contains('Continue to Payment').click()
+    cy.get('#street').type('123 Main St')
+    cy.get('#city').type('Bangalore')
+    cy.get('#state').type('Karnataka')
+    cy.get('#postal_code').type('560001')
+    cy.get('#country').type('India')
+    cy.contains('Continue to Payment').click()
+    cy.get('button').contains('Continue to Review').click()
+    cy.get('.gap-3 > .border').click()
+    cy.get('h3').should('contain', 'Payment Method')
+    cy.contains('Continue to Review').should('be.enabled')
 })
 })
