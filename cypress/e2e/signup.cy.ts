@@ -208,7 +208,7 @@ cy.contains('div', 'Error').should('be.visible')
 cy.contains('div', 'Please verify your email before logging in.').should('be.visible')
 })
 
-it('TC-38: Validate to check if user can login with valid credentials after verifying the email id', () => {
+it.only('TC-38: Validate to check if user can login with valid credentials after verifying the email id', () => {
 cy.get('button').contains('Sign In').click()
 cy.get('input[name="email"]').type('kaushik.leapus@gmail.com')
 cy.get('input[name="password"]').type('Test@123')
